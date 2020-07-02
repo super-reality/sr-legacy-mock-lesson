@@ -107,17 +107,29 @@ class CommonDescriptionTextEdit(QTextEdit):
     def __init__(self,parent):
         super(CommonDescriptionTextEdit,self).__init__(parent)
         self.setFixedHeight(50)
+        self.textChanged.connect(self.processTextChanged)
         self.__initUI()
     def __initUI(self):
-        self.setFont(QFont('Arial',10))
+        self.setFont(QFont('Arial',12))
+    def processTextChanged(self):
+        size = self.document().size().toSize()
+        if(size.height()<50):
+            return
+        self.setFixedHeight(size.height()+3)
 
 class CommonHeaderTextEdit(QTextEdit):
     def __init__(self,parent):
         super(CommonHeaderTextEdit,self).__init__(parent)
         self.setFixedHeight(50)
+        self.setStyleSheet('height:50px')
+        self.textChanged.connect(self.processTextChanged)
         self.__initUI()
     def __initUI(self):
-        self.setFont(QFont('Arial',14))
+        self.setFont(QFont('Arial',16))
+
+    def processTextChanged(self):
+        size = self.document().size().toSize()
+        self.setFixedHeight(size.height()+3)
 
 class QAnchorDialog(QLabel):
     pixmapChanged = pyqtSignal()
@@ -137,7 +149,6 @@ class QAnchorDialog(QLabel):
         self.bottomleftgrip.setStyleSheet('background-color:lightgreen')
         self.resize(300,200)
         
-        
         self.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
         self.__initUI()
 
@@ -147,11 +158,26 @@ class QAnchorDialog(QLabel):
         self.posxToEmit = None
         self.posyToEmit = None
 
+        #set object name for style
+        self.setObjectName("AnchorDlg")
+        self.setStyleSheet('#AnchorDlg{border:3px solid black; border-style:dashed}')
+        
+    def hideAllChild(self,ishide=True):
+        if(ishide):
+            self.label_header.hide()
+            self.topleftgrip.hide()
+            self.toprightgrip.hide()
+            self.bottomleftgrip.hide()
+            self.bottomrightgrip.hide()
+            pass
+        else:
+            pass
     def setClickPoint(self,b_clickable=False):
         self.ClickPointable = b_clickable
 
     def mousePressEvent(self, event):
         self.oldPos = event.globalPos()
+
 
     def __initUI(self):
 
@@ -174,6 +200,28 @@ class QAnchorDialog(QLabel):
         self.label_header.installEventFilter(self)
         pass
     
+    def getPixmapAtCurrentPosition(self):
+        
+        if(self.isHidden()):
+            return
+        posx = self.mapToGlobal(QPoint(0,0)).x()
+        posy = self.mapToGlobal(QPoint(0,0)).y()
+        W = self.width()
+        H = self.height()
+
+        
+        #hide temporarily to get image behind of this dialog
+        self.hide()
+        pix = getPixmapFromScreen(posx,posy,W,H)
+        self.setPixmap(pix)
+        
+        
+        #hide all text after double click.
+        self.label_header.setText("")
+        
+        #move again to original pos
+        self.pixmapChanged.emit()
+
     def mouseDoubleClickEvent(self,event):
 
         posx = self.mapToGlobal(QPoint(0,0)).x()
@@ -201,8 +249,10 @@ class QAnchorDialog(QLabel):
         self.sig_mouseClick.emit(self.posxToEmit,self.posyToEmit)
 
         pass
+    
     def enterEvent(self,e):
         pass
+
     def mouseMoveEvent(self,e):
         delta = QPoint (e.globalPos() - self.oldPos)
         self.move(self.x() + delta.x(), self.y() + delta.y())
@@ -211,6 +261,7 @@ class QAnchorDialog(QLabel):
     def showEvent(self,e):
         # self.move(self.parentWidget().mapToGlobal(QPoint(220,220))+QPoint(100,0))
         pass
+
     def paintEvent(self,event):
         
         if(self.ClickPointable):
@@ -223,7 +274,6 @@ class QAnchorDialog(QLabel):
         painter.setPen(Qt.red)
         
         if self.posxToEmit is not None and self.posyToEmit is not None:
-            print(self.posxToEmit,self.posyToEmit,"checkmehereererer1")
             painter.drawLine(self.posxToEmit-20,self.posyToEmit,self.posxToEmit+20,self.posyToEmit)
             painter.drawLine(self.posxToEmit,self.posyToEmit-20,self.posxToEmit,self.posyToEmit+20)
         else:
@@ -246,7 +296,8 @@ class MyRichTextDockWidget(QMainWindow):
         #event binidng
         self.dockWidget.topLevelChanged.connect(self.floatingChanged)
         pass
-    
+    def setPlaceHolderText(self,placeHStr):
+        self.wordprocessor.editor.setPlaceholderText(placeHStr)
     def floatingChanged(self):
         if(self.dockWidget.isFloating()):
             self.wordprocessor.hideAllButTextEdit(True)
@@ -343,7 +394,8 @@ class MyDropableLable(QLabel):
     def __init__(self,parent):
         super(MyDropableLable,self).__init__(parent)
         self.setStyleSheet('border:1 solid')
-        self.setFixedSize(200,200)
+        # self.setFixedSize(200,200)
+        self.resize(200,200)
         self.setAlignment(Qt.AlignCenter)
         self.setScaledContents(True)
         self.__initUI()

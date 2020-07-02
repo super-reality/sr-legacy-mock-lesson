@@ -8,9 +8,9 @@ from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent
+from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent,QRect
 from Setting import Settings
-from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap
+from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPainter,QPen
 from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, \
 QAction, QTabWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QFrame,QLabel,QSlider,QScrollArea,QCheckBox,QSizePolicy,QFileDialog,QDockWidget, QDialog
 from Component import MyTableWidget
@@ -27,9 +27,9 @@ class MainWindow(QWidget):
         self.layout  = QGridLayout()
         titlebar = MyBar(self)
         titlebar.setStyleSheet('border: 1px solid')
-        self.layout.addWidget(titlebar,0,0,1,10)
+        self.layout.addWidget(titlebar,0,0,1,100)
         body = MyTableWidget(self)
-        self.layout.addWidget(body,1,0,10,10)
+        self.layout.addWidget(body,1,0,100,100)
 
         #profile and setting button
         bt_profile = CommonButton(self,"Profile")
@@ -38,47 +38,75 @@ class MainWindow(QWidget):
         setting_profile = CommonButton(self,"Setting")
         setting_profile.setIcon(QIcon('icons/setting.png'))
 
-        self.layout.addWidget(bt_profile,1,8,1,1)
-        self.layout.addWidget(setting_profile,1,9,1,1)
+        self.layout.addWidget(bt_profile,1,88,1,5)
+        self.layout.addWidget(setting_profile,1,94,1,5)
+        
 
         self.setLayout(self.layout)
         self.layout.setContentsMargins(0,0,0,0)
-        self.setMinimumSize(400,800)
+        self.setMinimumSize(450,850)
         self.setWindowFlags(Qt.FramelessWindowHint|Qt.WindowStaysOnTopHint)
         self.pressing = False
         
 
         #init style sheet
-        self.__initStyleSheet()
+        
+        # self.__initStyleSheet()
 
     def __initStyleSheet(self):
         self.styleSheet = """
-        QPushButton{
-            
-        }
-        QLineEdit{
-            background-color:red
-        }
         MyRichTextDockWidget{
-            background-color:red
+            margin:0px;
+            padding:0px;
         }
-        QAnchorDialog{
-            background-color:red
+        #AnchorDlg{
+            border:3px solid black;
+            border-style: dashed
         }
         QWidget{
-            background-color:red
+            margin:0px;
+            padding:0px;
         }
         QLabel{
-            background-color:red
+            
         }
         QTextEdit{
-            background-color:red
+            margin:0px;
+            padding:0px;
+        }
+        QVBoxLayout{
+            margin:0px;
+            padding:0px;
+        }
+        QHBoxLayout{
+            margin:0px;
+            padding:0px;
+            border:1px solid
+        }
+        QGridLayout{
+            margin:0px;
+            padding:0px;
         }
         QTextEdit#objectName{
-            background-color:red
+            margin:0px;
+            padding:0px;
+        }
+        MainWindow{
+            margin:0px;
+            padding:0px;
         }
         """
         self.setStyleSheet(self.styleSheet)
+        # self.setStyleSheet("border:3px dashed solid")
+        
+    def paintEvent(self,event):
+
+        painter = QPainter(self)
+        pen = QPen(Qt.black)
+        pen.setWidth(2)
+        painter.setPen(pen)
+        painter.drawRect(QRect(2,2,self.width()-5,self.height()-5))
+        
 
 if __name__ == "__main__":
 

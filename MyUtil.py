@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 from PyQt5 import QtGui
 from PyQt5.QtGui import QImage
+from PyQt5.QtWidgets import QWidget,QFileDialog
 
 from desktopmagic.screengrab_win32 import (
 getDisplayRects, saveScreenToBmp, saveRectToBmp, getScreenAsImage,
@@ -150,3 +151,13 @@ def getWholeScreen(isgray=True):
         image = np.array(entireScreen)
         return convertImageToGray(image)
 
+def openFileDlg(parent = None):
+    
+    """
+    pls give parent to open dlg 'ex:parent = self'
+    """
+    
+    fname = QFileDialog.getOpenFileName(parent, 'Open file', 'c:\\', "Image files (*.jpg *.gif,*.bmp,*.tiff,*.png)")
+    imagePath = fname[0]
+    if(imagePath is not None and len(imagePath)):
+        return imagePath

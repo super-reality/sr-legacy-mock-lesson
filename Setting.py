@@ -13,6 +13,12 @@ class Settings:
     scrollUp = 'Scroll Up'
     rightClick = 'Right Click'
     leftClick = 'Left Click'
+    titlePlaceholder = 'add title'
+    descriptionPlaceholder = 'add description'
+    tagsPlaceHolder = 'add tags'
+    anchorText = 'SET ANCHOR'
+    stepTitlePlaceHolder = 'add step name'
+    stepDescriptionPlaceHolder = 'add step description'
     
 
     #Errors
@@ -42,10 +48,12 @@ class Settings:
     projectStudentPath = "ProjectsForStudent"
     projectTeacherPath = "ProjectsForTeacher"
     threshold = 0.95
-    bias = 1
+    bias = 0
+    prefixWidth = 20
 
     #dropbox
-    access_token = 'jen1g6kqkAAAAAAAAAAATH8b-4NGTrbgjJ2rK_6UiXqSGUNcYCLgL6kdCbGGNrVR'
+    # access_token = 'jen1g6kqkAAAAAAAAAAATH8b-4NGTrbgjJ2rK_6UiXqSGUNcYCLgL6kdCbGGNrVR'
+    access_token = 'jen1g6kqkAAAAAAAAAAAWGhw3J9-5WoPt89yzj2DFZo25FYjYpZ3DZ_BTeXoh1xP'
 
     def __init__(self):
        with open('setting.json') as f:

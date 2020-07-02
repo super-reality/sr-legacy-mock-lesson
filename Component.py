@@ -23,7 +23,7 @@ class MyTableWidget(QWidget):
         self.parent = parent
 
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.setContentsMargins(3,4,4,4)
         
         # Initialize tab screen
         self.tabs = QTabWidget()

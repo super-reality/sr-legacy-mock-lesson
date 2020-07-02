@@ -79,8 +79,8 @@ class CommonLessonItem(MyFrame):
         
         #set layout
         self.layout = MyGridLayout(self)
-        self.layout.addWidget(self.lbl_title,0,0,1,19)
-        self.layout.addWidget(self.lbl_icon,0,19,1,1)
+        self.layout.addWidget(self.lbl_title,0,0,1,16)
+        self.layout.addWidget(self.lbl_icon,0,16,1,4)
         self.layout.addWidget(self.lbl_description,1,0,1,20)
         
         #initialize info
@@ -280,7 +280,8 @@ class StudentBodyWidget(MyContainer):
                 self.anchorDlg.posxToEmit = posx
             self.anchorDlg.resize(H,W)
             self.anchorDlg.move(X,Y)
-            self.anchorDlg.setStyleSheet('background-color:lightgreen')
+            self.anchorDlg.hideAllChild()
+            self.anchorDlg.setStyleSheet('border:2px  solid blue')
             
             self.step = 1
             pass
@@ -685,9 +686,11 @@ class StudentTabWidget(MyContainer):
         self.studentToolBar.sig_bt_speaker.connect(self.sig_bt_speaker)
         self.studentToolBar.sig_bt_search.connect(self.sig_bt_search)
         pass
+    
     def setupProjectList(self,projectNameList):
         self.studentList.display(projectNameList)
         self.showProjectList()
+
     def showSelectedLesson(self):
         self.studentBody.show()
         self.studentList.hide()
