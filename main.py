@@ -1,0 +1,89 @@
+import sys
+
+from PyQt5.QtCore import QPoint
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QHBoxLayout
+from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtWidgets import QVBoxLayout
+from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent
+from Setting import Settings
+from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap
+from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, \
+QAction, QTabWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QFrame,QLabel,QSlider,QScrollArea,QCheckBox,QSizePolicy,QFileDialog,QDockWidget, QDialog
+from Component import MyTableWidget
+import webbrowser
+from Container import MyBar
+from Mybutton import CommonButton
+import logging
+
+
+class MainWindow(QWidget):
+
+    def __init__(self):
+        super(MainWindow, self).__init__()
+        self.layout  = QGridLayout()
+        titlebar = MyBar(self)
+        titlebar.setStyleSheet('border: 1px solid')
+        self.layout.addWidget(titlebar,0,0,1,10)
+        body = MyTableWidget(self)
+        self.layout.addWidget(body,1,0,10,10)
+
+        #profile and setting button
+        bt_profile = CommonButton(self,"Profile")
+        bt_profile.setIcon(QIcon('icons/profile.png'))
+        bt_profile.setStyleSheet('border:None')
+        setting_profile = CommonButton(self,"Setting")
+        setting_profile.setIcon(QIcon('icons/setting.png'))
+
+        self.layout.addWidget(bt_profile,1,8,1,1)
+        self.layout.addWidget(setting_profile,1,9,1,1)
+
+        self.setLayout(self.layout)
+        self.layout.setContentsMargins(0,0,0,0)
+        self.setMinimumSize(400,800)
+        self.setWindowFlags(Qt.FramelessWindowHint|Qt.WindowStaysOnTopHint)
+        self.pressing = False
+        
+
+        #init style sheet
+        self.__initStyleSheet()
+
+    def __initStyleSheet(self):
+        self.styleSheet = """
+        QPushButton{
+            
+        }
+        QLineEdit{
+            background-color:red
+        }
+        MyRichTextDockWidget{
+            background-color:red
+        }
+        QAnchorDialog{
+            background-color:red
+        }
+        QWidget{
+            background-color:red
+        }
+        QLabel{
+            background-color:red
+        }
+        QTextEdit{
+            background-color:red
+        }
+        QTextEdit#objectName{
+            background-color:red
+        }
+        """
+        self.setStyleSheet(self.styleSheet)
+
+if __name__ == "__main__":
+
+    logging.basicConfig(filename='log.txt', filemode='w', format='%(message)s')
+    app = QApplication(sys.argv)
+    mw = MainWindow()
+    mw.show()
+    sys.exit(app.exec_())

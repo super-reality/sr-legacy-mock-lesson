@@ -1,0 +1,8 @@
+{
+    "imageFrameSize":[200,200],
+    "FrameFixedHeight":400,
+    "AdminWinSize":[400,800],
+    "BackgroundColor":"background-color:rgb(107,107,107)",
+    "treeiconpath":"icons/stack.png",
+    "iconMinHeight":30
+}
