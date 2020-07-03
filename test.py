@@ -96,8 +96,30 @@ class MainWindow(QWidget):
 
 
 
+class SomeWidget(QWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.defaultWindowFlags = self.windowFlags()
+        print(self.windowFlags())
+        exit(0)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+
+        # ...
+        self.restoreButton = QPushButton('Restore state')
+        # ...
+        self.restoreButton.clicked.connect(self.restoreFlags)
+
+    def restoreFlags(self):
+        # setWindowFlags calls setParent(), so you might need to show it again if
+        # it was visible before; let's store the current state
+        isVisible = self.isVisible()
+        self.setWindowFlags(self.defaultWindowFlags)
+        if isVisible:
+            self.setVisible(True)
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    mw = MainWindow()
+    mw = SomeWidget()
     mw.show()
     sys.exit(app.exec_())

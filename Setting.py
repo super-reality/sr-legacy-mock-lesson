@@ -53,7 +53,7 @@ class Settings:
 
     #dropbox
     # access_token = 'jen1g6kqkAAAAAAAAAAATH8b-4NGTrbgjJ2rK_6UiXqSGUNcYCLgL6kdCbGGNrVR'
-    access_token = 'jen1g6kqkAAAAAAAAAAAWGhw3J9-5WoPt89yzj2DFZo25FYjYpZ3DZ_BTeXoh1xP'
+    access_token = 'jen1g6kqkAAAAAAAAAAAWSQo2KC2zGRwQbMAAc7L4etEt6B9OvNF6fAJ7N8553Mb'
 
     def __init__(self):
        with open('setting.json') as f:

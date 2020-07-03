@@ -151,6 +151,10 @@ def getWholeScreen(isgray=True):
         image = np.array(entireScreen)
         return convertImageToGray(image)
 
+def getScreenSize():
+    entireScreen = getScreenAsImage()
+    image = np.array(entireScreen)
+    return image.shape[0],image.shape[1]
 def openFileDlg(parent = None):
     
     """

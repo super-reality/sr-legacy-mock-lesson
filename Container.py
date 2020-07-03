@@ -11,7 +11,7 @@ from Mybutton import TitleButton,CloseButton
 from wordprocessor.wordprocessor import MyTextEditDialog
 from PyQt5.QtWebEngineWidgets import *
 from PyQt5.QtCore import Qt,QUrl
-from MyUtil import getPixmapFromScreen, isImageUrl
+from MyUtil import getPixmapFromScreen, isImageUrl,getScreenSize
 from threading import Thread
 import time
 
@@ -87,7 +87,7 @@ class CommonHeaderIcon(QLabel):
 
     def __init__(self,parent):
         super(CommonHeaderIcon,self).__init__(parent)
-        self.setFixedSize(30,30)
+        # self.setFixedSize(30,30)
         self.setStyleSheet('border:0')
         self.setWordWrap(True)
         self.setScaledContents(True)
@@ -262,6 +262,21 @@ class QAnchorDialog(QLabel):
         # self.move(self.parentWidget().mapToGlobal(QPoint(220,220))+QPoint(100,0))
         pass
 
+    def mouseReleaseEvent(self,event):
+        #if anchor is out of screen, then let it go into inside of screen
+        posx = self.mapToGlobal(QPoint(0,0)).x()
+        posy = self.mapToGlobal(QPoint(0,0)).y()
+        screenH,screenW = getScreenSize()
+        if(posx<0):
+            posx = 0
+        if((posx + self.width())>screenW):
+            posx = screenW - self.width()
+        if(posy<0):
+            posy = 0
+        if(posy + self.height()>screenH):
+            posy = screenH - self.height()
+        self.move(posx,posy)
+        
     def paintEvent(self,event):
         
         if(self.ClickPointable):
@@ -276,6 +291,7 @@ class QAnchorDialog(QLabel):
         if self.posxToEmit is not None and self.posyToEmit is not None:
             painter.drawLine(self.posxToEmit-20,self.posyToEmit,self.posxToEmit+20,self.posyToEmit)
             painter.drawLine(self.posxToEmit,self.posyToEmit-20,self.posxToEmit,self.posyToEmit+20)
+            painter.drawEllipse(self.posxToEmit-20,self.posyToEmit-20,40,40)
         else:
             pass
 

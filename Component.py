@@ -105,7 +105,11 @@ class MyTableWidget(QWidget):
         tags = self.tab_teacher.lookstep_page.Secondtoolbar.edit_lesson_tag.text()
         pixmapRefer = self.tab_teacher.lookstep_page.Secondtoolbar.lbl_picture.pixmap()
         pixmapAnchor = self.tab_teacher.lookstep_page.Secondtoolbar.anchorDialog.pixmap()
-        
+        if(self.tab_teacher.lookstep_page.Secondtoolbar.isPixmapSelected):
+            pass
+        else:
+            pixmapRefer = None
+            pixmapAnchor = None        
         
         try:
             resp = self.projectmgr.createProject(projectName,title,description,tags,pixmapRefer,pixmapAnchor)

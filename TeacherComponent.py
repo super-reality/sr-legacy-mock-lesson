@@ -296,6 +296,7 @@ class Teacher_LookStep_SecondToolBar(MyFrame):
     def __init__(self,parent):
 
         super(Teacher_LookStep_SecondToolBar,self).__init__(parent)
+        self.isPixmapSelected = False
         self.__initUI()
         
 
@@ -347,6 +348,7 @@ class Teacher_LookStep_SecondToolBar(MyFrame):
         pass
 
     def pixmapChanged(self):
+        self.isPixmapSelected = True
         pixmap = self.anchorDialog.pixmap()
         self.lbl_picture.setPixmap(pixmap)
         pass
