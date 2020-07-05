@@ -51,53 +51,18 @@ class MainWindow(QWidget):
 
         #init style sheet
         
-        # self.__initStyleSheet()
+        self.__initStyleSheet()
 
     def __initStyleSheet(self):
         self.styleSheet = """
-        MyRichTextDockWidget{
-            margin:0px;
-            padding:0px;
-        }
-        #AnchorDlg{
-            border:3px solid black;
-            border-style: dashed
-        }
-        QWidget{
-            margin:0px;
-            padding:0px;
-        }
-        QLabel{
+        MySizeGrip{
             
         }
         QTextEdit{
-            margin:0px;
-            padding:0px;
-        }
-        QVBoxLayout{
-            margin:0px;
-            padding:0px;
-        }
-        QHBoxLayout{
-            margin:0px;
-            padding:0px;
-            border:1px solid
-        }
-        QGridLayout{
-            margin:0px;
-            padding:0px;
-        }
-        QTextEdit#objectName{
-            margin:0px;
-            padding:0px;
-        }
-        MainWindow{
-            margin:0px;
-            padding:0px;
+            border:1px solid black
         }
         """
         self.setStyleSheet(self.styleSheet)
-        # self.setStyleSheet("border:3px dashed solid")
         
     def paintEvent(self,event):
 

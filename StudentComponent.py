@@ -235,6 +235,7 @@ class StudentBodyWidget(MyContainer):
     
         super(StudentBodyWidget,self).__init__(parent)
         self.prevItem = PrevArrowWidget(self)
+        self.nextArrowWidget = NextArrowWidget(self)
         self.itemHeader = None
         self.currentItem = None
         self.layout = None
@@ -282,11 +283,11 @@ class StudentBodyWidget(MyContainer):
                 self.anchorDlg.posyToEmit = posy
                 self.anchorDlg.posxToEmit = posx
                 self.anchorDlg.setAttribute(Qt.WA_TranslucentBackground)
-                print("here2")
+                
 
             else:
                 #set opacity
-                print("here1")
+                
                 self.anchorDlg.ClickPointable = False
                 self.anchorDlg.posyToEmit = None
                 self.anchorDlg.posxToEmit = None
@@ -309,6 +310,7 @@ class StudentBodyWidget(MyContainer):
             return
         if(self.step%2):
             self.anchorDlg.show()
+            self.anchorDlg.hideAllChild()
         else:
             self.anchorDlg.hide()
         self.step = self.step + 1
@@ -323,6 +325,7 @@ class StudentBodyWidget(MyContainer):
 
     def initializeObject(self,projectPath):
         self.prevItem.hide()
+        self.nextArrowWidget.hide()
         self.resetEvent.emit("")
         if(projectPath is None):
             return
@@ -366,7 +369,8 @@ class StudentBodyWidget(MyContainer):
         if(self.layout is None):
             self.layout = MyVBoxLayout(self)
         self.layout.addWidget(self.itemHeader)
-        self.prevItem.hide()
+        # self.prevItem.hide()
+
 
         self.itemList = []
         for idx in range(len(self.data.lessons)):
@@ -471,17 +475,23 @@ class StudentBodyWidget(MyContainer):
         #event binding
         self.itemHeader.mousePressEvent = self.processMoveEvent
         self.prevItem.clicked.connect(self.gotoPrev)
-
+        self.nextArrowWidget.installEventFilter(self)
+    
+    def showEvent(self,event):
+        # self.moveNextItem()
+        pass
     def hideAllNextAndNestedItems(self,isHide=True):
         
         if(isHide == True and self.nextItem is not None):
             self.nextItem.hide()
+            self.nextArrowWidget.hide()
             if(self.nestedItems is not None):
                 for item in self.nestedItems:
                     item.hide()
             pass
         elif(isHide == False and self.nextItem is not None):
-            self.nextItem.show()
+            # self.nextItem.show()
+            self.nextArrowWidget.show()
             if(self.nestedItems is not None):
                 for item in self.nestedItems:
                     item.show()
@@ -501,7 +511,11 @@ class StudentBodyWidget(MyContainer):
             self.setNextItemFloating(False)
             self.currentItem = self.nextItem
             self.currentItemChanged()
+        elif(event.type() == QEvent.MouseButtonPress and source == self.nextArrowWidget):
             
+            self.currentItem.hide()
+            self.currentItem = self.nextItem
+            self.currentItemChanged()            
         elif(event.type() == QEvent.MouseButtonPress and self.nestedItems is not None):
             #process press event in nested item
             if(source in self.nestedItems):
@@ -514,10 +528,14 @@ class StudentBodyWidget(MyContainer):
         return super(StudentBodyWidget,self).eventFilter(source,event)
 
     def movePrevItem(self):
-        
         self.prevItem.setSize(self.prevItem.width(),self.currentItem.height()+2)
         self.prevItem.show()
         self.prevItem.move(self.currentItem.mapToGlobal(QPoint(0,0))-QPoint(self.prevItem.width(),4))
+
+    def moveNextItem(self):
+        
+        self.nextArrowWidget.setSize(self.nextArrowWidget.width(),self.currentItem.height()+2)
+        self.nextArrowWidget.move(self.currentItem.mapToGlobal(QPoint(0,0)) + QPoint(self.window().width() - self.nextArrowWidget.width()//2,-4))
 
     def play(self,event):
         if(self.itemHeader is not None):
@@ -544,6 +562,8 @@ class StudentBodyWidget(MyContainer):
             self.itemHeader.hide()
         if(self.nextItem is not None):
             self.nextItem.hide()
+        if(self.nextArrowWidget is not None):
+            self.nextArrowWidget.hide()
         for item in self.nestedItems:
             item.hide()
         
@@ -575,7 +595,12 @@ class StudentBodyWidget(MyContainer):
         if(sign_nested == False):
             self.nestedItems = []
 
-        
+        if(self.nextItem == None):
+            #dont' show nextArrow
+            self.nextArrowWidget.hide()
+        else:
+            self.nextArrowWidget.show()
+            self.moveNextItem()
         #if current item is mousestepitem, then show mouse image
         if type(self.currentItem).__name__ == "CommonLessonMouseStepItem":
             if(self.currentItem.lbl_title.text() == Settings.scrollUp or self.currentItem.lbl_title.text() == Settings.scrollDown):
@@ -587,14 +612,14 @@ class StudentBodyWidget(MyContainer):
     def setNextItemFloating(self,isFloat=False):
         
         if(isFloat == True and self.nextItem is not None):
-            self.nextItem.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
+            # self.nextItem.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
             self.nextItem.resize(self.currentItem.width(),self.nextItem.sizeHint().height())
             self.processMoveEvent(None)
-            self.nextItem.show()
+            # self.nextItem.show()
         else:
             if(self.nextItem is not None):
                 self.nextItem.setWindowFlags(Qt.Widget)
-                self.nextItem.show()
+                # self.nextItem.show()
 
     def processMoveEvent(self,event):
 
@@ -602,12 +627,12 @@ class StudentBodyWidget(MyContainer):
             self.prevItem.move(self.currentItem.mapToGlobal(QPoint(0,0))-QPoint(self.prevItem.width(),4))
             if(self.nextItem is not None):
                 ######################  float next item to next current item #####################
-                self.nextItem.move(self.currentItem.mapToGlobal(QPoint(0,0))+QPoint(self.currentItem.width()+4,-4))
+                # self.nextItem.move(self.currentItem.mapToGlobal(QPoint(0,0))+QPoint(self.currentItem.width()+4,-4))
+                self.moveNextItem()
                 #########################
         pass
 
     def gotoPrev(self,event):
-        
         idx = self.itemList.index(self.currentItem)
         if(idx == 0):
             #go to main page.
@@ -615,6 +640,8 @@ class StudentBodyWidget(MyContainer):
                 self.prevItem.hide()
             if(self.nextItem is not None):
                 self.nextItem.hide()
+            if(self.nextArrowWidget is not None):
+                self.nextArrowWidget.hide()
 
             if(self.nestedItems is not None):
                 for item in self.nestedItems:
@@ -625,7 +652,8 @@ class StudentBodyWidget(MyContainer):
             self.resetEvent.emit("")
         else:
             self.currentItem.hide()
-            while(idx > 0):
+
+            while(idx >= 0):
                 if(self.itemList[idx-1].isChild == True):
                     idx = idx -1
                     continue

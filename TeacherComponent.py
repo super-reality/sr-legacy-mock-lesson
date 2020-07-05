@@ -9,7 +9,7 @@ from Mybutton import CarmineButton,QuestionButton,SocialButton,SpeakerButton,Sea
     EditButton,NewFolderButton,SearchPlusButton,CloudButton,LookStepButton,ClickStepButton,MatchStepButton,MouseStepButton,AttachStepButton,\
         PlayButton,PlayResumeButton,PictureButton,VideoButton,DeleteButton
 from Container import CustomDialog,MyContainer,MyVBoxLayout,MyHBoxLayout,MyGridLayout,\
-    QAnchorDialog,MyRichTextDockWidget,CommonHeaderLabel,CommonDescriptionTextEdit,CommonHeaderTextEdit,MyDropableLable,ValidLabel
+    QAnchorDialog,MyRichTextDockWidget,CommonHeaderLabel,CommonDescriptionTextEdit,CommonHeaderTextEdit,MyDropableLable,ValidLabel,CommonHeaderIcon
 from PyQt5 import QtWidgets
 
 
@@ -390,25 +390,29 @@ class LookStepItem(MyFrame):
         self.anchorDialog = QAnchorDialog(self)
         self.__initUI()
         self.setStyleSheet('padding:2px')
+        
+    def mousePressEvent(self,event):
+        
+        pass
 
     def __initUI(self):
 
         self.layout = MyGridLayout(self)
         self.edit_header = CommonHeaderTextEdit(self)
 
-        self.lbl_icon = CommonHeaderLabel(self)
+        self.lbl_icon = CommonHeaderIcon(self)
         self.lbl_icon.setPixmap(QPixmap('icons/lookstep.png'))
         self.edit_description = CommonDescriptionTextEdit(self)
-        self.edit_description.setPlaceholderText('Description')
-        self.lbl_prefix = CommonHeaderLabel(self)
-        self.lbl_prefix.setFixedWidth(Settings.prefixWidth)
-        self.edit_header.setPlaceholderText('LookStep')
-        self.lbl_prefix.setPixmap(QPixmap('icons/stack-step.png'))
+        self.lbl_prefix = CommonHeaderLabel(self,isPrefix=True)
+        self.edit_header.setPlaceholderText(Settings.stepTitlePlaceHolder)
+        self.edit_description.setPlaceholderText(Settings.stepDescriptionPlaceHolder)
 
         self.layout.addWidget(self.lbl_prefix,0,0,2,1)
         self.layout.addWidget(self.edit_header,0,1,1,19)
         self.layout.addWidget(self.lbl_icon,0,20,1,1)
         self.layout.addWidget(self.edit_description,1,1,1,20)
+
+        
     
     def getDatas(self):
         title = self.edit_header.toPlainText()
@@ -426,16 +430,13 @@ class LookStepItem(MyFrame):
         if(isminum == True):
 
             self.setWidgetSpan(self.lbl_prefix,1,1)
-            self.lbl_prefix.setMaximumHeight(self.edit_header.height()-10)
             self.edit_description.hide()
 
             pass
         else:
 
             self.setWidgetSpan(self.lbl_prefix,2,1)
-            self.lbl_prefix.setMaximumHeight(100)
             self.edit_description.show()
-
             pass
 
     def setWidgetSpan(self, widget, rowspan=1, colspan=1):
@@ -468,17 +469,15 @@ class ClickStepItem(MyFrame):
         self.layout = MyGridLayout(self)
 
         self.edit_header = CommonHeaderTextEdit(self)
-        self.lbl_icon = CommonHeaderLabel(self)
+        self.lbl_icon = CommonHeaderIcon(self)
         self.lbl_icon.setPixmap(QPixmap('icons/clickstep.png'))
         self.edit_description = CommonDescriptionTextEdit(self)
-        self.edit_description.setPlaceholderText('Description')
-        self.lbl_prefix = CommonHeaderLabel(self)
-        self.edit_header.setPlaceholderText('Click')
+        self.lbl_prefix = CommonHeaderLabel(self,isPrefix=True)
         
-        self.lbl_prefix.setPixmap(QPixmap('icons/stack-step.png'))
+        # self.lbl_prefix.setPixmap(QPixmap('icons/stack-step.png'))
         self.edit_sec_description = CommonDescriptionTextEdit(self)
-        self.edit_sec_description.setPlaceholderText('Nice')
-        self.lbl_prefix.setFixedWidth(Settings.prefixWidth)
+        self.edit_header.setPlaceholderText(Settings.stepTitlePlaceHolder)
+        self.edit_description.setPlaceholderText(Settings.stepDescriptionPlaceHolder)
 
         self.layout.addWidget(self.lbl_prefix,0,0,4,1)
         self.layout.addWidget(self.edit_header,0,1,1,19)
@@ -487,7 +486,10 @@ class ClickStepItem(MyFrame):
         self.layout.addWidget(self.edit_sec_description,2,1,1,20)
 
         pass
-    
+    def mousePressEvent(self,event):
+        
+        pass
+
     def display(self,isminum=False):
         if(self.isChild):
             self.setContentsMargins(30,0,0,0)
@@ -496,13 +498,11 @@ class ClickStepItem(MyFrame):
             self.setContentsMargins(0,0,0,0)
         if(isminum == True):
             self.setWidgetSpan(self.lbl_prefix,1,1)
-            self.lbl_prefix.setMaximumHeight(self.edit_header.height())
             self.show()
             self.edit_description.hide()
             self.edit_sec_description.hide()
         else:
             self.setWidgetSpan(self.lbl_prefix,4,1)
-            self.lbl_prefix.setMaximumHeight(150)
             self.edit_description.show()
             self.edit_sec_description.show()
     
@@ -532,24 +532,20 @@ class MatchStepItem(MyFrame):
         self.anchorDialog = QAnchorDialog(self)
         self.__initUI()
         self.setStyleSheet('padding:2px')
+        self.lbl_uploadImg.setStyleSheet('margin-bottom:5px;border:1px solid black')
 
     def __initUI(self):
         
         self.layout = MyGridLayout(self)
         self.edit_header = CommonHeaderTextEdit(self)
-        self.lbl_icon = CommonHeaderLabel(self)
+        self.lbl_icon = CommonHeaderIcon(self)
         self.lbl_icon.setPixmap(QPixmap('icons/matchstep.png'))
         self.edit_description = CommonDescriptionTextEdit(self)
-        self.edit_description.setPlaceholderText('Description')
-        self.lbl_prefix = CommonHeaderLabel(self)
-        self.edit_header.setPlaceholderText('Match')
-        self.lbl_prefix.setPixmap(QPixmap('icons/stack-step-big.png'))
-        self.edit_sec_description = CommonDescriptionTextEdit(self)
-        self.edit_sec_description.setPlaceholderText('Nice')
-        self.lbl_prefix.setFixedWidth(Settings.prefixWidth)
+        self.lbl_prefix = CommonHeaderLabel(self,isPrefix=True)
+        # self.lbl_prefix.setPixmap(QPixmap('icons/stack-step-big.png'))
+        self.edit_header.setPlaceholderText(Settings.stepTitlePlaceHolder)
+        self.edit_description.setPlaceholderText(Settings.stepDescriptionPlaceHolder)
         
-        self.slider = QSlider(self)
-        self.slider.setOrientation(Qt.Horizontal)
 
         self.bt_pic = PictureButton(self)
         self.bt_video = VideoButton(self)
@@ -566,25 +562,20 @@ class MatchStepItem(MyFrame):
         self.bt_downscroll.setIcon(QIcon('icons/downarrow.png'))
         self.checkbt_showscrolll.setText('Show Scroll iocns')
 
-        #set fixed height for textedit
-        self.edit_sec_description.setFixedHeight(50)
-        self.edit_description.setFixedHeight(50)
-        self.edit_header.setFixedHeight(50)
+        #set fixed height for some widget
+
 
         
-        self.layout.addWidget(self.lbl_prefix,0,0,17,1)
+        self.layout.addWidget(self.lbl_prefix,0,0,23,1)
         self.layout.addWidget(self.edit_header,0,1,1,19)
         self.layout.addWidget(self.lbl_icon,0,20,1,1)
         self.layout.addWidget(self.edit_description,1,1,1,20)
-        self.layout.addWidget(self.edit_sec_description,2,1,1,20)
-        self.layout.addWidget(self.slider,3,1,3,20)
-        self.layout.addWidget(self.bt_pic,6,1,1,1)
-        self.layout.addWidget(self.bt_video,6,2,1,1)
-        self.layout.addWidget(self.bt_newfolder,6,3,1,1)
-        self.layout.addWidget(self.lbl_uploadImg,7,1,10,10)
-        # self.layout.addWidget(self.checkbt_showscrolll,18,1,1,5)
-        # self.layout.addWidget(self.bt_upscroll,18,7,1,1)
-        # self.layout.addWidget(self.bt_downscroll,18,8,1,1)
+        
+        self.layout.addWidget(self.bt_pic,2,1,1,1)
+        self.layout.addWidget(self.bt_video,2,2,1,1)
+        self.layout.addWidget(self.bt_newfolder,2,3,1,1)
+        self.layout.addWidget(self.lbl_uploadImg,3,1,20,20)
+        
 
         #this seems to be useless at the moment.
         self.checkbt_showscrolll.hide()
@@ -593,27 +584,31 @@ class MatchStepItem(MyFrame):
 
         #bind events
         self.anchorDialog.pixmapChanged.connect(self.updatePic)
-        
+        self.bt_pic.clicked.connect(self.process_bt_pic_clicked)
         pass
-
+    def process_bt_pic_clicked(self):
+        if(self.anchorDialog.isHidden()):
+            self.anchorDialog.show()
+        else:
+            self.anchorDialog.getPixmapAtCurrentPosition()
+            self.anchorDialog.hide()
+        
     def updatePic(self):
         pixmap = self.anchorDialog.pixmap()
         self.lbl_uploadImg.setPixmap(pixmap)
+        
         pass
 
     def getDatas(self):
 
         title = self.edit_header.toPlainText()
         description = self.edit_description.toPlainText()
-        sec_description =self.edit_sec_description.toPlainText()
+        sec_description =""
         uploadPixmap = self.lbl_uploadImg.pixmap()
         anchorPixmap = self.anchorDialog.pixmap()
         
         return Settings.matchStep,title,description,sec_description,uploadPixmap,anchorPixmap,self.isChild,None
     
-    # def hideEvent(self,event):
-    #     super().hide()
-    #     self.anchorDialog.hide()
     
     def display(self,isminum = False):
         if(self.isChild):
@@ -624,39 +619,26 @@ class MatchStepItem(MyFrame):
         if(isminum == True):
             #set prefix label height to header label
             self.setWidgetSpan(self.lbl_prefix,1,1)
-            self.lbl_prefix.setMaximumHeight(self.edit_header.height())
             self.setWidgetSpan(self.lbl_uploadImg,0,0)
-            self.setWidgetSpan(self.slider,0,0)
-            self.layout.setRowStretch(18,0)
-
+            self.layout.setRowStretch(2,0)
             self.edit_description.hide()
-            self.edit_sec_description.hide()
-            self.slider.hide()
+            
             self.bt_pic.hide()
             self.bt_video.hide()
             self.bt_newfolder.hide()
             self.lbl_uploadImg.hide()
-            # self.checkbt_showscrolll.hide()
-            # self.bt_upscroll.hide()
-            # self.bt_downscroll.hide()
+            
         else:
 
-            self.setWidgetSpan(self.lbl_prefix,17,1)
-            self.lbl_prefix.setMaximumHeight(450)
-            self.setWidgetSpan(self.lbl_uploadImg,10,10)
-            self.setWidgetSpan(self.slider,3,9)
-            self.layout.setRowStretch(18,1)
+            self.setWidgetSpan(self.lbl_prefix,23,1)
+            self.setWidgetSpan(self.lbl_uploadImg,20,20)
+            self.layout.setRowStretch(2,1)
 
             self.edit_description.show()
-            self.edit_sec_description.show()
-            self.slider.show()
             self.bt_pic.show()
             self.bt_video.show()
             self.bt_newfolder.show()
             self.lbl_uploadImg.show()
-            # self.checkbt_showscrolll.show()
-            # self.bt_upscroll.show()
-            # self.bt_downscroll.show()
     
     def setWidgetSpan(self, widget, rowspan=1, colspan=1):
 
@@ -681,14 +663,13 @@ class MouseStepItem(MyFrame):
         
         self.layout = MyGridLayout(self)
         self.edit_header = CommonHeaderTextEdit(self)
-        self.lbl_icon = CommonHeaderLabel(self)
+        self.lbl_icon = CommonHeaderIcon(self)
         self.lbl_icon.setPixmap(QPixmap('icons/mousestep.png'))
         self.edit_description = CommonDescriptionTextEdit(self)
-        self.edit_description.setPlaceholderText('Description')
-        self.lbl_prefix = CommonHeaderLabel(self)
-        self.edit_header.setPlaceholderText('Click')
-        self.lbl_prefix.setPixmap(QPixmap('icons/stack-step-big.png'))
-        self.lbl_prefix.setFixedWidth(Settings.prefixWidth)
+        self.edit_header.setPlaceholderText(Settings.stepTitlePlaceHolder)
+        self.edit_description.setPlaceholderText(Settings.stepDescriptionPlaceHolder)
+        self.lbl_prefix = CommonHeaderLabel(self,isPrefix=True)
+        # self.lbl_prefix.setPixmap(QPixmap('icons/stack-step-big.png'))
         self.optionRight = QRadioButton("Right Click")
         self.optionScroll = QRadioButton("Scroll")
         self.lbl_uploadImg = MyDropableLable(self)
@@ -763,7 +744,6 @@ class MouseStepItem(MyFrame):
         
         if(isminum == True):
 
-            self.lbl_prefix.setMaximumHeight(self.edit_header.height()-10)
             self.setWidgetSpan(self.lbl_prefix,2,1)
             self.setWidgetSpan(self.lbl_uploadImg,0,0)
             self.setWidgetSpan(self.bt_pic,0,0)
@@ -785,7 +765,7 @@ class MouseStepItem(MyFrame):
 
             self.setWidgetSpan(self.lbl_prefix,19,1)
             self.setWidgetSpan(self.lbl_uploadImg,10,10)
-            self.lbl_prefix.setMaximumHeight(300)
+            # self.lbl_prefix.setMaximumHeight(300)
             self.setWidgetSpan(self.bt_pic,1,1)
             self.setWidgetSpan(self.edit_description,2,19)
             self.setWidgetSpan(self.optionRight,2,3)
@@ -913,7 +893,7 @@ class MyListWidget(QWidget):
                 item.anchorDialog.show()
                 pass
             else:
-                item.display(isminum=True)
+                # item.display(isminum=True)
                 # item.display(isminum=False)#checkmehere
                 item.anchorDialog.hide()
 
@@ -1016,7 +996,7 @@ class TeacherNewLessionPage(MyContainer):
         self.Thirdtoolbar.bt_delete.clicked.connect(lambda:self.addItem('delete'))
 
         self.newLessonbar.frame.mousePressEvent = self.gotoNewLessonPage
-        self.Secondtoolbar.edit_lesson_title.textChanged.connect(self.newLessonbar.lbl_lessonTitle.setText)
+        self.Secondtoolbar.edit_lesson_title.textChanged.connect(self.newLessonbar.setText)
         self.Secondtoolbar.anchorDialog.pixmapChanged.connect(self.pixmapChanged)
 
         
@@ -1104,16 +1084,13 @@ class TeahcerNewLookStepPage(MyContainer):
 
         super(TeahcerNewLookStepPage,self).__init__(parent)
         self.__initUI()
-        self.setLabelIcon("Make Smiley Face",'icons/smile.png')
 
     def __initUI(self):
 
         self.layout = MyGridLayout(self)
         self.lbl_lessonTitle = CommonHeaderLabel(self)
         self.frame = MyFrame(self)
-        self.lbl_icon = CommonHeaderLabel(self)
-        self.lbl_icon.setFixedSize(30,30)
-        self.lbl_icon.setScaledContents(True)
+        self.lbl_icon = CommonHeaderIcon(self)
         self.listWidget = MyListWidget(self)
         self.lbl_lessonTitle.setContentsMargins(10,1,10,1)
         self.lbl_icon.setContentsMargins(1,1,1,1)
@@ -1143,10 +1120,16 @@ class TeahcerNewLookStepPage(MyContainer):
     def gotoTeacherNewLessonPage(self,event):
         # for future use
         pass
-        
+    
+    def setText(self,str_text):
+        print(str_text,"checkmeherer")
+        self.lbl_lessonTitle.setText(str_text)
+        pass
+
     def setLabelIcon(self, label = "Title",iconPath='icons/smile.png'):
-        self.lbl_lessonTitle.setText(label)
-        self.lbl_icon.setPixmap(QPixmap(iconPath))
+        # self.lbl_lessonTitle.setText(label)
+        # self.lbl_icon.setPixmap(QPixmap(iconPath))
+        pass
 
 class TeacherTabWidget(MyContainer):
     gotoStudentTab = pyqtSignal(str)

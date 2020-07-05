@@ -68,10 +68,24 @@ class MyContainer(QWidget):
         self.layout.addWidget(widget, row, column, rowspan, colspan)
 
 class CommonHeaderLabel(QLabel):
-    def __init__(self,parent):
+    def __init__(self,parent,isPrefix=False):
         super(CommonHeaderLabel,self).__init__(parent)
+        # self.setMaximumSize(200,100)
+        self.isPrefix = isPrefix
+        if(isPrefix):
+            self.setMaximumSize(Settings.prefixWidth,400)
+            self.setFixedWidth(Settings.prefixWidth)
         self.setWordWrap(True)
         self.setFont(QFont('Arial',14))
+
+    def paintEvent(self,event):
+        if(self.isPrefix == False):
+            super(CommonHeaderLabel,self).paintEvent(event)
+            return
+        painter = QPainter(self)
+        painter.setPen(QPen(Qt.black))
+        painter.drawLine(QPoint(self.width()//3,10),QPoint(self.width()//3,self.height()-10))
+        painter.drawLine(QPoint(self.width()*2//3,10),QPoint(self.width()*2//3,self.height()-10))
 
 class CommonHeaderLabelForAnchor(CommonHeaderLabel):
     def __init__(self,parent):
@@ -90,7 +104,7 @@ class CommonHeaderIcon(QLabel):
         # self.setFixedSize(30,30)
         self.setStyleSheet('border:0')
         self.setWordWrap(True)
-        self.setScaledContents(True)
+        # self.setScaledContents(True)
 
     def enterEvent(self,event):
         self.setCursor(Qt.PointingHandCursor)
@@ -108,6 +122,7 @@ class CommonDescriptionTextEdit(QTextEdit):
         super(CommonDescriptionTextEdit,self).__init__(parent)
         self.setFixedHeight(50)
         self.textChanged.connect(self.processTextChanged)
+        self.setStyleSheet('border:1px solid black;margin-bottom:5px')
         self.__initUI()
     def __initUI(self):
         self.setFont(QFont('Arial',12))
@@ -121,9 +136,10 @@ class CommonHeaderTextEdit(QTextEdit):
     def __init__(self,parent):
         super(CommonHeaderTextEdit,self).__init__(parent)
         self.setFixedHeight(50)
-        self.setStyleSheet('height:50px')
         self.textChanged.connect(self.processTextChanged)
+        self.setStyleSheet('border:1px solid black')
         self.__initUI()
+
     def __initUI(self):
         self.setFont(QFont('Arial',16))
 
@@ -131,22 +147,121 @@ class CommonHeaderTextEdit(QTextEdit):
         size = self.document().size().toSize()
         self.setFixedHeight(size.height()+3)
 
+class CommonFramelessWidget(QMainWindow):
+    def __init__(self,parent):
+        super(CommonFramelessWidget,self).__init__(parent)
+        self.setWindowFlags(Qt.Window|Qt.FramelessWindowHint)
+        self.isMousePressed = False
+
+    def mousePressEvent(self, event):
+        self.isMousePressed = True
+        self.oldPos = event.globalPos()
+    def mouseReleaseEvent(self,event):
+        self.isMousePressed = False
+    def mouseMoveEvent(self,e):
+        delta = QPoint (e.globalPos() - self.oldPos)
+        self.move(self.x() + delta.x(), self.y() + delta.y())
+        self.oldPos = e.globalPos()
+
+class MySizeGrip(CommonFramelessWidget):
+    
+    def __init__(self,parent,position=Settings.topleft):
+        super(MySizeGrip,self).__init__(parent)
+        self.oldpos = None
+        self.newpos = None
+        self.position = position
+        self.gripsize = Settings.gripSize
+        self.setStyleSheet('border: 2px solid black;')
+        self.__initUI()
+
+    def __initUI(self):
+        self.resize(Settings.gripSize,Settings.gripSize)
+        
+        pass
+    def changeGripSize(self):
+        Settings.gripSize = max(min(self.parentWidget().width(),self.parentWidget().height(),100)//5,10)
+        self.resize(Settings.gripSize,Settings.gripSize)
+        pass
+
+    def processParentPositionChangeEvent(self,event):
+        if(self.isMousePressed == False):
+            self.showEvent(None)
+        pass
+    def showEvent(self,event):
+        self.changeGripSize()
+        # move this widget to parent's corner
+        parentpos = self.parentWidget().mapToGlobal(QPoint(0,0)).x(),self.parentWidget().mapToGlobal(QPoint(0,0)).y()
+        parentWidgetSize = self.parentWidget().width(),self.parentWidget().height()
+        
+        if(self.position == Settings.topleft):
+            self.move(parentpos[0]-Settings.gripSize//2,parentpos[1]-Settings.gripSize//2)
+        if(self.position == Settings.topright):
+            self.move(parentpos[0]+ parentWidgetSize[0] - Settings.gripSize//2,parentpos[1]-Settings.gripSize//2)
+        if(self.position == Settings.bottomleft):
+            self.move(parentpos[0]-Settings.gripSize//2,parentpos[1] - Settings.gripSize//2 + parentWidgetSize[1])
+        if(self.position == Settings.bottomright):
+            self.move(parentpos[0] + parentWidgetSize[0] - Settings.gripSize//2,parentpos[1] - Settings.gripSize//2 + parentWidgetSize[1])
+
+
+        self.oldpos = self.mapToGlobal(QPoint(0,0)).x(),self.mapToGlobal(QPoint(0,0)).y()
+
+    def moveEvent(self,event):
+        if(self.oldpos is None or self.isMousePressed == False):
+            return
+        self.changeGripSize()
+        self.newpos = self.mapToGlobal(QPoint(0,0)).x()+Settings.gripSize//2,self.mapToGlobal(QPoint(0,0)).y()+Settings.gripSize//2
+        #process here
+        if(self.position == Settings.topleft):
+            diffx = self.newpos[0] - self.oldpos[0]
+            diffy = self.newpos[1] - self.oldpos[1]
+            width = self.parentWidget().width()
+            height = self.parentWidget().height()
+            self.parentWidget().resize(width-diffx,height-diffy)
+            self.parentWidget().move(*self.newpos)
+            pass
+        elif(self.position == Settings.topright):
+            diffx = self.newpos[0] - self.oldpos[0]
+            diffy = self.newpos[1] - self.oldpos[1]
+            width = self.parentWidget().width()
+            height = self.parentWidget().height()
+            self.parentWidget().resize(width+diffx,height-diffy)
+            self.parentWidget().move(self.newpos[0]-width,self.newpos[1]+diffy)
+            pass
+        elif(self.position == Settings.bottomleft):
+            diffx = self.newpos[0] - self.oldpos[0]
+            diffy = self.newpos[1] - self.oldpos[1]
+            width = self.parentWidget().width()
+            height = self.parentWidget().height()
+            self.parentWidget().resize(width-diffx,height+diffy)
+            self.parentWidget().move(self.newpos[0],self.newpos[1]-height)
+            pass
+        elif(self.position == Settings.bottomright):
+            diffx = self.newpos[0] - self.oldpos[0]
+            diffy = self.newpos[1] - self.oldpos[1]
+            width = self.parentWidget().width()
+            height = self.parentWidget().height()
+            self.parentWidget().resize(width+diffx,height+diffy)
+            self.parentWidget().move(self.newpos[0] - width,self.newpos[1] - height)
+            pass
+        else:
+
+            pass
+
+        self.oldpos = self.newpos
+
 class QAnchorDialog(QLabel):
     pixmapChanged = pyqtSignal()
     sig_mouseClick = pyqtSignal(int,int)
+    sig_moveResizeEvent = pyqtSignal(str)
     def __init__(self,parent):
 
         super(QAnchorDialog,self).__init__(parent)
 
         #set corner's sizeGrip Objects
-        self.topleftgrip =QSizeGrip(self)
-        self.toprightgrip =QSizeGrip(self)
-        self.bottomrightgrip =QSizeGrip(self)
-        self.bottomleftgrip =QSizeGrip(self)
-        self.topleftgrip.setStyleSheet('background-color:lightgreen')
-        self.toprightgrip.setStyleSheet('background-color:lightgreen')
-        self.bottomrightgrip.setStyleSheet('background-color:lightgreen')
-        self.bottomleftgrip.setStyleSheet('background-color:lightgreen')
+        self.topleftgrip =MySizeGrip(self,position=Settings.topleft)
+        self.toprightgrip =MySizeGrip(self,position=Settings.topright)
+        self.bottomrightgrip =MySizeGrip(self,position=Settings.bottomleft)
+        self.bottomleftgrip =MySizeGrip(self,position=Settings.bottomright)
         self.resize(300,200)
         
         self.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
@@ -157,14 +272,20 @@ class QAnchorDialog(QLabel):
         self.ClickPointable = False
         self.posxToEmit = None
         self.posyToEmit = None
-
+        
         #set object name for style
         self.setObjectName("AnchorDlg")
-        self.setStyleSheet('#AnchorDlg{border:3px solid black; border-style:dashed}')
+        self.setStyleSheet('#AnchorDlg{border:2px solid black; border-style:dashed}')
+
+        #event binding
+        self.sig_moveResizeEvent.connect(self.topleftgrip.processParentPositionChangeEvent)
+        self.sig_moveResizeEvent.connect(self.toprightgrip.processParentPositionChangeEvent)
+        self.sig_moveResizeEvent.connect(self.bottomleftgrip.processParentPositionChangeEvent)
+        self.sig_moveResizeEvent.connect(self.bottomrightgrip.processParentPositionChangeEvent)
         
     def hideAllChild(self,ishide=True):
         if(ishide):
-            self.label_header.hide()
+            # self.label_header.hide()
             self.topleftgrip.hide()
             self.toprightgrip.hide()
             self.bottomleftgrip.hide()
@@ -172,6 +293,7 @@ class QAnchorDialog(QLabel):
             pass
         else:
             pass
+
     def setClickPoint(self,b_clickable=False):
         self.ClickPointable = b_clickable
 
@@ -182,22 +304,13 @@ class QAnchorDialog(QLabel):
     def __initUI(self):
 
         gbox = MyGridLayout(self)
-        self.label_header = CommonHeaderLabelForAnchor(self)
-        self.label_header.setText("ANCHOR\n \nDrag and Double Click To Capture Image")
-        self.label_header.setWordWrap(True)
-        self.label_header.setAlignment(Qt.AlignCenter)
-        
-        
-        gbox.addWidget(self.topleftgrip,0,0,1,1)
-        gbox.addWidget(self.toprightgrip,0,19,1,1)
-        gbox.addWidget(self.bottomrightgrip,19,19,1,1)
-        gbox.addWidget(self.bottomleftgrip,19,0,1,1)
-        
-        
-        gbox.addWidget(self.label_header,1,1,18,18)
 
-        #bind event
-        self.label_header.installEventFilter(self)
+        # self.label_header = CommonHeaderLabelForAnchor(self)
+        # self.label_header.setText("ANCHOR\n \nDrag and Double Click To Capture Image")
+        # self.label_header.setText("")
+        # self.label_header.setWordWrap(True)
+        # self.label_header.setAlignment(Qt.AlignCenter)     
+
         pass
     
     def getPixmapAtCurrentPosition(self):
@@ -214,11 +327,7 @@ class QAnchorDialog(QLabel):
         self.hide()
         pix = getPixmapFromScreen(posx,posy,W,H)
         self.setPixmap(pix)
-        
-        
-        #hide all text after double click.
-        self.label_header.setText("")
-        
+                
         #move again to original pos
         self.pixmapChanged.emit()
 
@@ -234,9 +343,6 @@ class QAnchorDialog(QLabel):
         pix = getPixmapFromScreen(posx,posy,W,H)
         self.setPixmap(pix)
         
-        
-        #hide all text after double click.
-        self.label_header.setText("")
         
         #move again to original pos
         self.show()
@@ -257,10 +363,23 @@ class QAnchorDialog(QLabel):
         delta = QPoint (e.globalPos() - self.oldPos)
         self.move(self.x() + delta.x(), self.y() + delta.y())
         self.oldPos = e.globalPos()
- 
+        self.sig_moveResizeEvent.emit("")
+
+    def resizeEvent(self,event):
+        self.sig_moveResizeEvent.emit("")
+
     def showEvent(self,e):
         # self.move(self.parentWidget().mapToGlobal(QPoint(220,220))+QPoint(100,0))
+        self.topleftgrip.show()
+        self.bottomleftgrip.show()
+        self.bottomrightgrip.show()
+        self.toprightgrip.show()
         pass
+    def hideEvent(self,e):
+        self.topleftgrip.hide()
+        self.toprightgrip.hide()
+        self.bottomrightgrip.hide()
+        self.bottomleftgrip.hide()
 
     def mouseReleaseEvent(self,event):
         #if anchor is out of screen, then let it go into inside of screen
@@ -410,10 +529,10 @@ class MyDropableLable(QLabel):
     def __init__(self,parent):
         super(MyDropableLable,self).__init__(parent)
         self.setStyleSheet('border:1 solid')
-        # self.setFixedSize(200,200)
+        self.setMaximumSize(400,400)
         self.resize(200,200)
         self.setAlignment(Qt.AlignCenter)
-        self.setScaledContents(True)
+        # self.setScaledContents(True)
         self.__initUI()
     def __initUI(self):
         self.setPixmap(QPixmap('icons/placeholder.png'))
@@ -465,6 +584,22 @@ class PrevArrowWidget(QToolButton):
         self.resize(20,150)
         self.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
         self.setArrowType(Qt.LeftArrow)
+        
+    def setSize(self,width,height):
+        self.resize(width,height)
+        pass
+class NextArrowWidget(QToolButton):
+
+    def __init__(self,parent):
+
+        super(NextArrowWidget,self).__init__(parent)
+        self.__initUI()
+
+    def __initUI(self):
+        self.setStyleSheet('border:1 solid')
+        self.resize(20,150)
+        self.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
+        self.setArrowType(Qt.RightArrow)
         
     def setSize(self,width,height):
         self.resize(width,height)

@@ -91,7 +91,7 @@ def match_image(url):
     H = 0
     R = 1
 
-    scales = np.linspace(0.7, 1.3, 15)[::-1]
+    scales = np.linspace(0.5, 1.9, 25)[::-1]
     scales = np.insert(scales, 0, 1.0, axis=0)
 
     for scale in scales:
