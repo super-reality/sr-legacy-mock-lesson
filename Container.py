@@ -82,10 +82,10 @@ class CommonHeaderLabel(QLabel):
         if(self.isPrefix == False):
             super(CommonHeaderLabel,self).paintEvent(event)
             return
-        painter = QPainter(self)
-        painter.setPen(QPen(Qt.black))
-        painter.drawLine(QPoint(self.width()//3,10),QPoint(self.width()//3,self.height()-10))
-        painter.drawLine(QPoint(self.width()*2//3,10),QPoint(self.width()*2//3,self.height()-10))
+        # painter = QPainter(self)
+        # painter.setPen(QPen(Qt.black))
+        # painter.drawLine(QPoint(self.width()//3,10),QPoint(self.width()//3,self.height()-10))
+        # painter.drawLine(QPoint(self.width()*2//3,10),QPoint(self.width()*2//3,self.height()-10))
 
 class CommonHeaderLabelForAnchor(CommonHeaderLabel):
     def __init__(self,parent):
@@ -147,7 +147,7 @@ class CommonHeaderTextEdit(QTextEdit):
         size = self.document().size().toSize()
         self.setFixedHeight(size.height()+3)
 
-class CommonFramelessWidget(QMainWindow):
+class CommonFramelessWidget(QFrame):
     def __init__(self,parent):
         super(CommonFramelessWidget,self).__init__(parent)
         self.setWindowFlags(Qt.Window|Qt.FramelessWindowHint)
@@ -298,6 +298,7 @@ class MyChildAnchorWidget(CommonFramelessWidget):
 
         #set styles , attributes and properties
         self.setWindowOpacity(Settings.commonOpacity)
+        self.setStyleSheet('border:1px solid black; border-style:dashed;background: rgba(255,255,255,0.8)')
         self.setStyleSheet('border:1px solid red')
         self.topleftgrip.setStyleSheet('border:1px solid red')
         self.toprightgrip.setStyleSheet('border:1px solid red')
@@ -333,6 +334,7 @@ class MyChildAnchorWidget(CommonFramelessWidget):
         self.toprightgrip.show()
         self.bottomleftgrip.show()
         self.bottomrightgrip.show()
+
 
     def hideEvent(self,event):
 
@@ -404,17 +406,19 @@ class QAnchorDialog(QLabel):
         self.resize(300,200)
         
         self.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
-        self.__initUI()
 
         #set opacity
-        self.setWindowOpacity(Settings.commonOpacity) # this is should be called after InitUI() to take effect
         self.ClickPointable = False
+        self.isFirstShowing = True
+
         self.posxToEmit = None
         self.posyToEmit = None
         
         #set object name for style
         self.setObjectName("AnchorDlg")
-        self.setStyleSheet('#AnchorDlg{border:2px solid black; border-style:dashed}')
+        self.setStyleSheet('#AnchorDlg{border:2px solid black; border-style:dashed;}')
+        self.setWindowOpacity(Settings.commonOpacity)
+        # self.__initUI()
         self.childAnchor.hide()
 
         #event binding
@@ -441,16 +445,15 @@ class QAnchorDialog(QLabel):
     def mousePressEvent(self, event):
         self.oldPos = event.globalPos()
 
-
     def __initUI(self):
-
-        # gbox = MyGridLayout(self)
-        # self.label_header = CommonHeaderLabelForAnchor(self)
-        # self.label_header.setText("ANCHOR\n \nDrag and Double Click To Capture Image")
-        # self.label_header.setText("")
-        # self.label_header.setWordWrap(True)
-        # self.label_header.setAlignment(Qt.AlignCenter)     
-
+        # self.backgroundwidget = QWidget(self)
+        # self.layout = MyVBoxLayout(self)
+        # self.layout.addWidget(self.backgroundwidget)
+        # self.backgroundwidget.setWindowOpacity(0.5)
+        # self.backgroundwidget.setStyleSheet('background-color:red')
+        # self.backgroundwidget.hide()
+        self.setAttribute(Qt.WA_TranslucentBackground|Qt.WA_NoSystemBackground)
+        
         pass
     
     def getPixmapAtCurrentPosition(self):
@@ -525,6 +528,15 @@ class QAnchorDialog(QLabel):
         self.toprightgrip.show()
         if self.ClickPointable == True:
             self.childAnchor.show()
+            if(self.isFirstShowing == True):
+                #move to center of parent anchor
+                self.isFirstShowing = False
+                curposx,curposy = self.mapToGlobal(QPoint(0,0)).x(),self.mapToGlobal(QPoint(0,0)).y()
+                centerx,centery = curposx + self.width()//2, curposy + self.height()//2
+                self.childAnchor.move(centerx - self.width()//4,centery - self.height()//4)
+                self.childAnchor.resize(self.width()//2,self.height()//2)
+                self.childAnchor.processParentMoveEvent(None,None)
+                pass
         pass
 
     def hideEvent(self,e):
@@ -558,15 +570,15 @@ class QAnchorDialog(QLabel):
             super().paintEvent(event)
             return
         
-        painter = QPainter(self)
-        painter.setPen(Qt.red)
+        # painter = QPainter(self)
+        # painter.setPen(Qt.red)
         
-        if self.posxToEmit is not None and self.posyToEmit is not None:
-            painter.drawLine(self.posxToEmit-20,self.posyToEmit,self.posxToEmit+20,self.posyToEmit)
-            painter.drawLine(self.posxToEmit,self.posyToEmit-20,self.posxToEmit,self.posyToEmit+20)
-            painter.drawEllipse(self.posxToEmit-20,self.posyToEmit-20,40,40)
-        else:
-            pass
+        # if self.posxToEmit is not None and self.posyToEmit is not None:
+        #     painter.drawLine(self.posxToEmit-20,self.posyToEmit,self.posxToEmit+20,self.posyToEmit)
+        #     painter.drawLine(self.posxToEmit,self.posyToEmit-20,self.posxToEmit,self.posyToEmit+20)
+        #     painter.drawEllipse(self.posxToEmit-20,self.posyToEmit-20,40,40)
+        # else:
+        #     pass
 
 class MyRichTextDockWidget(QMainWindow):
     def __init__(self, *args):
@@ -742,6 +754,7 @@ class PrevArrowWidget(QToolButton):
     def setSize(self,width,height):
         self.resize(width,height)
         pass
+
 class NextArrowWidget(QToolButton):
 
     def __init__(self,parent):
@@ -852,4 +865,22 @@ class MyProgressDlg(QDialog):
         else:
             pass
 
+class MyRow(QWidget):
+
+    def __init__(self, parent):
     
+        super(MyRow,self).__init__(parent)
+        self.__initUI()
+
+    def __initUI(self):
+
+        self.setStyleSheet('margin:1px;')
+        self.layout = QHBoxLayout(self)
+        self.layout.addStretch(1)
+        pass
+
+    def addWidget(self,item):
+
+        self.layout.insertWidget(self.layout.count()-1,item)
+
+        pass

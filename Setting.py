@@ -16,6 +16,7 @@ class Settings:
     titlePlaceholder = 'add title'
     descriptionPlaceholder = 'add description'
     
+
     tagsPlaceHolder = 'add tags'
     anchorText = 'SET ANCHOR'
     stepTitlePlaceHolder = 'add step name'
@@ -38,10 +39,13 @@ class Settings:
 
     projectAlreadyExist = 10
     projectNameNotSpecified = 11
-    commonOpacity = 0.7
+    commonOpacity = 0.2
 
     projectFileManagementError = "Cant' delete original project directory"
     projectStepCreationError = "Error occured in Step Creation"
+    clickSportText = "Show Click Spot"
+    imageMatchText = "Image Match"
+    textMatchText = "Text Match"
 
     #params
     gotoLessson = 1
@@ -55,7 +59,7 @@ class Settings:
     projectTeacherPath = "ProjectsForTeacher"
     threshold = 0.95
     bias = 0
-    prefixWidth = 12
+    prefixWidth = 2
     gripSize = 20
     #dropbox
     # access_token = 'jen1g6kqkAAAAAAAAAAATH8b-4NGTrbgjJ2rK_6UiXqSGUNcYCLgL6kdCbGGNrVR'

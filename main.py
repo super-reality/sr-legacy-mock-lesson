@@ -66,6 +66,7 @@ class MainWindow(QWidget):
             border:1px solid black
         }
         """
+        
         self.setStyleSheet(self.styleSheet)
         
     def paintEvent(self,event):

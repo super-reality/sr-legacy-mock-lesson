@@ -5,11 +5,8 @@ QAction, QTabWidget,QGridLayout,QFrame,QLabel,QSlider,QScrollArea,QCheckBox,QSiz
 from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPaintDevice,QPainter,QPen
 from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent,QTimer,pyqtSignal, QPoint
 from Setting import Settings
-from Mybutton import CarmineButton,QuestionButton,SocialButton,SpeakerButton,SearchButton,BookButton,\
-    EditButton,NewFolderButton,SearchPlusButton,CloudButton,LookStepButton,ClickStepButton,MatchStepButton,MouseStepButton,AttachStepButton,\
-        PlayButton,PlayResumeButton,PictureButton,VideoButton,DeleteButton
-from Container import CustomDialog,MyContainer,MyVBoxLayout,MyHBoxLayout,MyGridLayout,\
-    QAnchorDialog,MyRichTextDockWidget,CommonHeaderLabel,CommonDescriptionTextEdit,CommonHeaderTextEdit,MyDropableLable,ValidLabel,CommonHeaderIcon
+from Mybutton import *
+from Container import *
 from PyQt5 import QtWidgets
 
 
@@ -261,7 +258,7 @@ class TeacherSecondToolbar(MyFrame):
 
 class TeacherSecondLessonToolbar(MyFrame):
     def __init__(self,parent):
-        super(TeacherSecondLessonToolbar,self).__init__(parent)
+        super(TeacherSecondLessonToolbar,self).__init__(parent,)
         self.__initUI()
         
     def __initUI(self):
@@ -486,12 +483,34 @@ class ClickStepItem(MyFrame):
         self.bt_pic = PictureButton(self)
         self.bt_video = VideoButton(self)
         self.bt_newfolder = NewFolderButton(self)
+        self.bt_attach = AttachStepButton(self)
         self.lbl_uploadImg = MyDropableLable(self)
+        self.checkbt_clickSpot = MyCheckBox(self)
+        self.lbl_clickSpot = CommonHeaderLabel(self)
+        self.checkbt_imageRec = MyCheckBox(self)
+        self.combo_imageRec = MyComboBox(self)
+        
+        self.row_clickspot = MyRow(self)
+        self.row_imageRec = MyRow(self)
+        self.row_clickspot.addWidget(self.checkbt_clickSpot)
+        self.row_clickspot.addWidget(self.lbl_clickSpot)
+        self.row_imageRec.addWidget(self.checkbt_imageRec)
+        self.row_imageRec.addWidget(self.combo_imageRec)
+        self.row_snapshot = MyRow(self)
+        self.row_snapshot.addWidget(self.bt_pic)
+        self.row_snapshot.addWidget(self.bt_video)
+        self.row_snapshot.addWidget(self.bt_attach)
+        
         
         # set properties for each object
         self.edit_sec_description = CommonDescriptionTextEdit(self)
         self.edit_header.setPlaceholderText(Settings.stepTitlePlaceHolder)
         self.edit_description.setPlaceholderText(Settings.stepDescriptionPlaceHolder)
+        self.lbl_clickSpot.setText(Settings.clickSportText)
+        self.combo_imageRec.addItem(Settings.imageMatchText)
+        self.combo_imageRec.addItem(Settings.textMatchText)
+        self.combo_imageRec.setCurrentIndex(0)
+        self.checkbt_clickSpot.setChecked(True)
 
         #set layout
         self.layout.addWidget(self.lbl_prefix,0,0,23,1)
@@ -499,21 +518,48 @@ class ClickStepItem(MyFrame):
         self.layout.addWidget(self.lbl_icon,0,20,1,1)
         self.layout.addWidget(self.edit_description,1,1,1,20)
         self.layout.addWidget(self.edit_sec_description,2,1,1,20)
-
-        
-        self.layout.addWidget(self.bt_pic,2,1,1,1)
-        self.layout.addWidget(self.bt_video,2,2,1,1)
-        self.layout.addWidget(self.bt_newfolder,2,3,1,1)
-        self.layout.addWidget(self.lbl_uploadImg,3,1,20,20)
+        self.layout.addWidget(self.row_clickspot,2,1,1,20)
+        self.layout.addWidget(self.row_imageRec,3,1,1,1)
+                
+        # self.layout.addWidget(self.bt_pic,4,1,1,1)
+        # self.layout.addWidget(self.bt_video,4,2,1,1)
+        # self.layout.addWidget(self.bt_att,4,3,1,1)
+        self.layout.addWidget(self.row_snapshot,4,1,1,20)
+        self.layout.addWidget(self.lbl_uploadImg,5,1,20,20)
 
         #current feedback field seems to be not needed #checkme here
         self.edit_sec_description.hide()
+        self.bt_newfolder.hide()
 
         #bind event
         self.bt_pic.clicked.connect(self.process_bt_pic_clicked)
         self.anchorDialog.pixmapChanged.connect(self.updatePic)
+        self.checkbt_clickSpot.stateChanged.connect(self.process_checkbt_clickSpot)
+        self.checkbt_imageRec.stateChanged.connect(self.process_checkbt_imageRec)
         pass
 
+    def process_checkbt_clickSpot(self,event):
+        if(event):
+            self.anchorDialog.setClickPoint(True)
+            posx = self.anchorDialog.mapToGlobal(QPoint(0,0)).x() + self.anchorDialog.width()//2
+            posy = self.anchorDialog.mapToGlobal(QPoint(0,0)).y() + self.anchorDialog.height()//2
+            self.anchorDialog.childAnchor.move(posx-self.anchorDialog.width()//4,posy-self.anchorDialog.height()//4)
+            self.anchorDialog.childAnchor.resize(self.anchorDialog.width()//2,self.anchorDialog.height()//2)
+            self.anchorDialog.childAnchor.show()
+            self.anchorDialog.childAnchor.topleftgrip.showEvent(None)
+            self.anchorDialog.childAnchor.toprightgrip.showEvent(None)
+            self.anchorDialog.childAnchor.bottomleftgrip.showEvent(None)
+            self.anchorDialog.childAnchor.bottomrightgrip.showEvent(None)
+            pass
+        else:
+            self.anchorDialog.setClickPoint(False)
+            self.anchorDialog.childAnchor.hide()
+            pass
+    def process_checkbt_imageRec(self,event):
+        if(event):
+            pass
+        else:
+            pass
     def process_bt_pic_clicked(self):
         if(self.anchorDialog.isHidden()):
             self.anchorDialog.show()
@@ -544,6 +590,9 @@ class ClickStepItem(MyFrame):
             self.bt_video.hide()
             self.bt_newfolder.hide()
             self.lbl_uploadImg.hide()
+            self.checkbt_clickSpot.hide()
+            self.checkbt_imageRec.hide()
+            self.combo_imageRec.hide()
             
             # self.edit_sec_description.hide()
         else:
@@ -551,8 +600,11 @@ class ClickStepItem(MyFrame):
             self.edit_description.show()
             self.bt_pic.show()
             self.bt_video.show()
-            self.bt_newfolder.show()
+            # self.bt_newfolder.show()
             self.lbl_uploadImg.show()
+            self.checkbt_clickSpot.show()
+            self.checkbt_imageRec.show()
+            self.combo_imageRec.show()
             
             # self.edit_sec_description.show()
     
@@ -938,7 +990,7 @@ class MyListWidget(QWidget):
         self.listitems.append(item)
         self.currentItem = item
         self.currentItem.edit_header.installEventFilter(self)
-        self.currentItem.lbl_prefix.installEventFilter(self)
+        # self.currentItem.lbl_prefix.installEventFilter(self) #check me here no need add child item
         self.showAllItems()
 
     def showAllItems(self):
@@ -1071,6 +1123,12 @@ class TeacherNewLessionPage(MyContainer):
             self.newLessonbar.listWidget.insertItem(None)
             pass
         elif(itemtype == 'click'):
+            if(self.newLessonbar.isHidden()):
+                if(len(self.newLessonbar.listWidget.listitems) == 0):
+                    pass
+                else:
+                    self.gotoStepPage()
+                    return
             self.newLessonbar.listWidget.insertItem(ClickStepItem(self))
             pass
         elif(itemtype == 'cloud'):

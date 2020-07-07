@@ -1,10 +1,11 @@
 import sys
 from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, \
-QAction, QTabWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QFrame,QLabel,QSlider,QScrollArea,QCheckBox,QSizePolicy,QFileDialog,QDockWidget, QDialog
+QAction, QTabWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QFrame,QLabel,QSlider,QScrollArea,QCheckBox,QSizePolicy,QFileDialog,QDockWidget, QDialog , QComboBox, QHBoxLayout
 from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap
 from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent
 from Setting import Settings
 import webbrowser
+
 
 class MyCommonButton(QPushButton):
     def __init__(self,parent=None):
@@ -309,3 +310,20 @@ class SignalButton(MyCommonButton):
     def leaveEvent(self,event):
         self.setWindowOpacity(0.1)
 
+class MyCheckBox(QCheckBox):
+    def __init__(self,parent):
+        super(MyCheckBox,self).__init__(parent)
+        self.__initUI()
+        self.setFont(QFont('Arial',16))
+    def __initUI(self):
+        pass
+
+class MyComboBox(QComboBox):
+    def __init__(self,parent):
+
+        super(MyComboBox,self).__init__(parent)
+        self.__initUI()
+        self.setFont(QFont('Arial',16))
+        pass
+    def __initUI(self):
+        pass

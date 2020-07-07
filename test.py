@@ -1,58 +1,30 @@
-from PyQt5.QtWidgets import QWidget,QApplication,QTextEdit
+from PyQt5.QtWidgets import QMainWindow, QApplication,QFrame,QWidget,QVBoxLayout
 from PyQt5.QtCore import Qt
-from PyQt5 import QtWidgets
 import sys
 
 
-class MyContainer(QWidget):
-    def __init__(self,parent):
-        super(MyContainer,self).__init__(parent)
-        # self.setContentsMargins(0,0,0,0)
-        # self.setStyleSheet('border:0')
-        
-    def __initUI(self):
-        pass
-    def setWidgetSpan(self, widget, rowspan=1, colspan=1):
-        index = self.layout.indexOf(widget)
-        row, column = self.layout.getItemPosition(index)[:2]
-        self.layout.addWidget(widget, row, column, rowspan, colspan)
+class MainWindowExample(QWidget):
+    def __init__(self, parent=None):
+        try:
+            QMainWindow.__init__(self, parent)
+            # self.setStyleSheet("border: 11px solid ;")
+            # self.setWindowOpacity(0.3)
+            self.test = QWidget(self)
+            self.layout = QVBoxLayout(self)
+            self.layout.addWidget(self.test)
+            self.test.setWindowOpacity(0.5)
+            self.test.setStyleSheet('background-color:red')
+            self.test.resize(300,300)
+            self.setAttribute(Qt.WA_NoSystemBackground, True)
+            self.setWindowFlags(Qt.FramelessWindowHint)
+            self.setAttribute(Qt.WA_TranslucentBackground)
+            self.resize(300,300)
+        except Exception as e:
+            print(e)
 
-class SomeWidget(MyContainer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        pass
 
-    def mousePressEvent(self,event):
-        pass
-
-    def restoreFlags(self):
-        # setWindowFlags calls setParent(), so you might need to show it again if
-        # it was visible before; let's store the current state
-        pass
-class mainWidget(QWidget):
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
-        styles = """
-        MyContainer{
-            border:3px solid green
-        }
-        """
-        widget = SomeWidget(self)
-        widget.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
-        widget.resize(self.width()//2,self.height()//2)
-        widget.setStyleSheet('background-color:red')
-        widget.show()
-        self.setStyleSheet(styles)
-        pass
-
-def test1():
-    return 0,1
-
-if __name__ == "__main__":
-
-    # app = QApplication(sys.argv)
-    # mw = mainWidget()
-    # mw.show()
-    # sys.exit(app.exec_())
-    
-    pass
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    main_widow = MainWindowExample()
+    main_widow.show()
+    sys.exit(app.exec_())
