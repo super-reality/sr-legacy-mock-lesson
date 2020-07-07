@@ -38,6 +38,7 @@ class Settings:
 
     projectAlreadyExist = 10
     projectNameNotSpecified = 11
+    commonOpacity = 0.7
 
     projectFileManagementError = "Cant' delete original project directory"
     projectStepCreationError = "Error occured in Step Creation"
@@ -59,6 +60,8 @@ class Settings:
     #dropbox
     # access_token = 'jen1g6kqkAAAAAAAAAAATH8b-4NGTrbgjJ2rK_6UiXqSGUNcYCLgL6kdCbGGNrVR'
     access_token = 'jen1g6kqkAAAAAAAAAAAWyZCt6fp07F7Tw2jhUpqgqiQseWdaWjf7UlZaZAFBi9V'
+
+    
 
     def __init__(self):
        with open('setting.json') as f:

@@ -284,11 +284,19 @@ class TeacherSecondLessonToolbar(MyFrame):
         hbox.addWidget(self.bt_matchstep)
         hbox.addWidget(self.bt_mousestep)
         hbox.addWidget(self.bt_attachstep)
+        hbox.addStretch(1)
         hbox.addWidget(self.bt_delete)
         
         hbox.addStretch(1)
         hbox.addWidget(self.bt_cloudbutton)
         hbox.addWidget(self.bt_playbutton)
+
+        #Lookstep and mousestep seems to be not needed #checkmehere
+        self.bt_lookstep.hide()
+        self.bt_mousestep.hide()
+        self.bt_matchstep.hide()
+        self.bt_cloudbutton.hide()
+        self.bt_attachstep.hide()
         return hbox
 
 class Teacher_LookStep_SecondToolBar(MyFrame):
@@ -462,7 +470,9 @@ class ClickStepItem(MyFrame):
         self.posx = None
         self.posy = None
         self.__initUI()
-        self.setStyleSheet('padding:2px')
+
+        #set style
+        self.lbl_uploadImg.setStyleSheet('margin-bottom:10px;border:1px solid black')
     
     def __initUI(self):
 
@@ -473,19 +483,49 @@ class ClickStepItem(MyFrame):
         self.lbl_icon.setPixmap(QPixmap('icons/clickstep.png'))
         self.edit_description = CommonDescriptionTextEdit(self)
         self.lbl_prefix = CommonHeaderLabel(self,isPrefix=True)
+        self.bt_pic = PictureButton(self)
+        self.bt_video = VideoButton(self)
+        self.bt_newfolder = NewFolderButton(self)
+        self.lbl_uploadImg = MyDropableLable(self)
         
-        # self.lbl_prefix.setPixmap(QPixmap('icons/stack-step.png'))
+        # set properties for each object
         self.edit_sec_description = CommonDescriptionTextEdit(self)
         self.edit_header.setPlaceholderText(Settings.stepTitlePlaceHolder)
         self.edit_description.setPlaceholderText(Settings.stepDescriptionPlaceHolder)
 
-        self.layout.addWidget(self.lbl_prefix,0,0,4,1)
+        #set layout
+        self.layout.addWidget(self.lbl_prefix,0,0,23,1)
         self.layout.addWidget(self.edit_header,0,1,1,19)
         self.layout.addWidget(self.lbl_icon,0,20,1,1)
         self.layout.addWidget(self.edit_description,1,1,1,20)
         self.layout.addWidget(self.edit_sec_description,2,1,1,20)
 
+        
+        self.layout.addWidget(self.bt_pic,2,1,1,1)
+        self.layout.addWidget(self.bt_video,2,2,1,1)
+        self.layout.addWidget(self.bt_newfolder,2,3,1,1)
+        self.layout.addWidget(self.lbl_uploadImg,3,1,20,20)
+
+        #current feedback field seems to be not needed #checkme here
+        self.edit_sec_description.hide()
+
+        #bind event
+        self.bt_pic.clicked.connect(self.process_bt_pic_clicked)
+        self.anchorDialog.pixmapChanged.connect(self.updatePic)
         pass
+
+    def process_bt_pic_clicked(self):
+        if(self.anchorDialog.isHidden()):
+            self.anchorDialog.show()
+        else:
+            self.anchorDialog.getPixmapAtCurrentPosition()
+            self.anchorDialog.hide()
+        
+    def updatePic(self):
+        pixmap = self.anchorDialog.pixmap()
+        self.lbl_uploadImg.setPixmap(pixmap)
+        pass
+
     def mousePressEvent(self,event):
         
         pass
@@ -500,11 +540,21 @@ class ClickStepItem(MyFrame):
             self.setWidgetSpan(self.lbl_prefix,1,1)
             self.show()
             self.edit_description.hide()
-            self.edit_sec_description.hide()
+            self.bt_pic.hide()
+            self.bt_video.hide()
+            self.bt_newfolder.hide()
+            self.lbl_uploadImg.hide()
+            
+            # self.edit_sec_description.hide()
         else:
-            self.setWidgetSpan(self.lbl_prefix,4,1)
+            self.setWidgetSpan(self.lbl_prefix,23,1)
             self.edit_description.show()
-            self.edit_sec_description.show()
+            self.bt_pic.show()
+            self.bt_video.show()
+            self.bt_newfolder.show()
+            self.lbl_uploadImg.show()
+            
+            # self.edit_sec_description.show()
     
     def setWidgetSpan(self, widget, rowspan=1, colspan=1):
         index = self.layout.indexOf(widget)
@@ -531,8 +581,8 @@ class MatchStepItem(MyFrame):
         self.isChild = False
         self.anchorDialog = QAnchorDialog(self)
         self.__initUI()
-        self.setStyleSheet('padding:2px')
-        self.lbl_uploadImg.setStyleSheet('margin-bottom:5px;border:1px solid black')
+        self.lbl_uploadImg.setStyleSheet('margin-bottom:10px;border:1px solid black')
+        
 
     def __initUI(self):
         
@@ -585,7 +635,14 @@ class MatchStepItem(MyFrame):
         #bind events
         self.anchorDialog.pixmapChanged.connect(self.updatePic)
         self.bt_pic.clicked.connect(self.process_bt_pic_clicked)
+        # self.edit_header.focusOutEvent = self.processFocusout
+
         pass
+
+    def processFocusout(self,event):
+        
+        self.anchorDialog.hide()
+
     def process_bt_pic_clicked(self):
         if(self.anchorDialog.isHidden()):
             self.anchorDialog.show()
@@ -608,8 +665,7 @@ class MatchStepItem(MyFrame):
         anchorPixmap = self.anchorDialog.pixmap()
         
         return Settings.matchStep,title,description,sec_description,uploadPixmap,anchorPixmap,self.isChild,None
-    
-    
+  
     def display(self,isminum = False):
         if(self.isChild):
             self.setContentsMargins(30,0,0,0)
@@ -998,6 +1054,7 @@ class TeacherNewLessionPage(MyContainer):
         self.newLessonbar.frame.mousePressEvent = self.gotoNewLessonPage
         self.Secondtoolbar.edit_lesson_title.textChanged.connect(self.newLessonbar.setText)
         self.Secondtoolbar.anchorDialog.pixmapChanged.connect(self.pixmapChanged)
+
 
         
         return self.layout

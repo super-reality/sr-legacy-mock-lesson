@@ -54,7 +54,11 @@ class MainWindow(QWidget):
         self.__initStyleSheet()
 
     def __initStyleSheet(self):
+        #strange stylesheet not working
         self.styleSheet = """
+        MatchStepItem{
+            margin-bottom:5px;border:1px solid black;
+        }
         MySizeGrip{
             
         }
