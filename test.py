@@ -18,7 +18,7 @@ class MainWindowExample(QWidget):
             self.setAttribute(Qt.WA_NoSystemBackground, True)
             self.setWindowFlags(Qt.FramelessWindowHint)
             self.setAttribute(Qt.WA_TranslucentBackground)
-            self.resize(300,300)
+            
         except Exception as e:
             print(e)
 if __name__ == '__main__':
