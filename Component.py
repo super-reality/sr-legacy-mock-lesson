@@ -147,7 +147,7 @@ class MyTableWidget(QWidget):
                     params = item.getDatas()
                     if(item.anchorDialog is not None):
                         item.anchorDialog.hide()
-                    self.projectmgr.setPos(item.posx,item.posy)
+                    self.projectmgr.setClickArea(item.posx,item.posy,item.posWidth,item.posHeight)
                     self.projectmgr.createStep(*params)
                     #create clickstep
                     pass

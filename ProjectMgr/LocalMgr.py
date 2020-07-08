@@ -21,6 +21,8 @@ class LocalProjectMgr:
         self.__localPathForStudent = os.path.join(os.getcwd(),"ProjectsForStudent")
         self.posx = None
         self.posy = None
+        self.posWidth = None
+        self.posHeight = None
         self.projectPath = None
         self.curStep = None
         self.json = None
@@ -139,6 +141,12 @@ class LocalProjectMgr:
         self.posy = posy
         pass
 
+    def setClickArea(self,posx,posy, width, height):
+        self.posx = posx
+        self.posy = posy
+        self.posHeight = height
+        self.posWidth = width
+
     def createStep(self,stepType=None,title='',description='',sec_description='',uploadPixmap=None,anchorPixmap=None,isChild=False,mouseState=None):
         
         """
@@ -174,8 +182,10 @@ class LocalProjectMgr:
             obj['description'] = description
             obj['sec_description'] = sec_description
             obj['isChild'] = 'false' if not isChild else 'true'
-            obj['posx'] = self.posx
-            obj['posy'] = self.posy
+            obj['spotposx'] = self.posx
+            obj['spotposy'] = self.posy
+            obj['spotwidth'] = self.posWidth
+            obj['spotheight'] = self.posHeight
             obj['anchorPixmap'] = anchorPixmapName
             pass
         elif(stepType == Settings.matchStep):
@@ -209,7 +219,6 @@ class LocalProjectMgr:
             pass
         else:
             return 'Unknown type of step'
-        print(obj,"obj")
         self.json['lessons'].append(obj)
         return True
         

@@ -466,6 +466,9 @@ class ClickStepItem(MyFrame):
         self.anchorDialog.setClickPoint(True)
         self.posx = None
         self.posy = None
+        self.posWidth = None
+        self.posHeight = None
+        self.currentPixmap = None
         self.__initUI()
 
         #set style
@@ -541,6 +544,8 @@ class ClickStepItem(MyFrame):
     def process_checkbt_clickSpot(self,event):
         if(event):
             self.anchorDialog.setClickPoint(True)
+            #if anchor diallog is hidden, then don't show child anchor also.
+            
             posx = self.anchorDialog.mapToGlobal(QPoint(0,0)).x() + self.anchorDialog.width()//2
             posy = self.anchorDialog.mapToGlobal(QPoint(0,0)).y() + self.anchorDialog.height()//2
             self.anchorDialog.childAnchor.move(posx-self.anchorDialog.width()//4,posy-self.anchorDialog.height()//4)
@@ -550,6 +555,9 @@ class ClickStepItem(MyFrame):
             self.anchorDialog.childAnchor.toprightgrip.showEvent(None)
             self.anchorDialog.childAnchor.bottomleftgrip.showEvent(None)
             self.anchorDialog.childAnchor.bottomrightgrip.showEvent(None)
+            if(self.anchorDialog.isHidden() == True):
+                self.anchorDialog.childAnchor.hide()
+                return
             pass
         else:
             self.anchorDialog.setClickPoint(False)
@@ -570,10 +578,20 @@ class ClickStepItem(MyFrame):
     def updatePic(self):
         pixmap = self.anchorDialog.pixmap()
         self.lbl_uploadImg.setPixmap(pixmap)
+        self.currentPixmap = pixmap
+        if(self.anchorDialog.ClickPointable):
+            #set child anchor pos info
+            self.posx = self.anchorDialog.childAnchor.mapToGlobal(QPoint(0,0)).x()
+            self.posy = self.anchorDialog.childAnchor.mapToGlobal(QPoint(0,0)).y()
+            self.posWidth = self.anchorDialog.childAnchor.width()
+            self.posHeight = self.anchorDialog.childAnchor.height()
+        else:
+            pass
+        # self.anchorDialog.setPixmap(pixmap)
         pass
 
     def mousePressEvent(self,event):
-        
+
         pass
 
     def display(self,isminum=False):
@@ -616,8 +634,10 @@ class ClickStepItem(MyFrame):
     #     super().hide()
     #     self.anchorDialog.hide()
     def sig_mouseClick(self,posx,posy):
-        self.posx = posx
-        self.posy = posy
+        #checkmehere don't need to show crosshair to mouse click point
+        # self.posx = posx
+        # self.posy = posy
+        pass
     def getDatas(self):
         title = self.edit_header.toPlainText()
         description = self.edit_description.toPlainText()
@@ -1237,7 +1257,6 @@ class TeahcerNewLookStepPage(MyContainer):
         pass
     
     def setText(self,str_text):
-        print(str_text,"checkmeherer")
         self.lbl_lessonTitle.setText(str_text)
         pass
 

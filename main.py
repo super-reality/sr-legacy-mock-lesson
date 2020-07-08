@@ -66,8 +66,8 @@ class MainWindow(QWidget):
             border:1px solid black
         }
         """
-        
         self.setStyleSheet(self.styleSheet)
+        # self.setAttribute(Qt.WA_StyledBackground)
         
     def paintEvent(self,event):
 

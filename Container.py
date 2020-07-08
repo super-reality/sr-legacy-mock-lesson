@@ -298,7 +298,7 @@ class MyChildAnchorWidget(CommonFramelessWidget):
 
         #set styles , attributes and properties
         self.setWindowOpacity(Settings.commonOpacity)
-        self.setStyleSheet('border:1px solid black; border-style:dashed;background: rgba(255,255,255,0.8)')
+        self.setStyleSheet('border:1px solid black; border-style:dashed;background-color: #ff0074')
         self.setStyleSheet('border:1px solid red')
         self.topleftgrip.setStyleSheet('border:1px solid red')
         self.toprightgrip.setStyleSheet('border:1px solid red')
@@ -416,7 +416,8 @@ class QAnchorDialog(QLabel):
         
         #set object name for style
         self.setObjectName("AnchorDlg")
-        self.setStyleSheet('#AnchorDlg{border:2px solid black; border-style:dashed;}')
+        self.setStyleSheet('#AnchorDlg{border:2px solid black; border-style:dashed;background-color:#00deff}')
+
         self.setWindowOpacity(Settings.commonOpacity)
         # self.__initUI()
         self.childAnchor.hide()
