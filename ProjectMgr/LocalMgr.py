@@ -82,8 +82,9 @@ class LocalProjectMgr:
             
             
             if(referPixmap is not None):
-                referPixmap.save(filepath)
-                imageName = filename
+                # referPixmap.save(filepath)
+                # imageName = filename
+                pass
             filename,filepath = self.getFileNameTobeCreated()
             if(anchorPixmap is not None):
                 anchorImageName = filename

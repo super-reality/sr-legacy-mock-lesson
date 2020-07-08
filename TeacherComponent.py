@@ -302,6 +302,7 @@ class Teacher_LookStep_SecondToolBar(MyFrame):
 
         super(Teacher_LookStep_SecondToolBar,self).__init__(parent)
         self.isPixmapSelected = False
+        self.currentPixmap = None
         self.__initUI()
         
 
@@ -577,17 +578,24 @@ class ClickStepItem(MyFrame):
         
     def updatePic(self):
         pixmap = self.anchorDialog.pixmap()
-        self.lbl_uploadImg.setPixmap(pixmap)
         self.currentPixmap = pixmap
+        
         if(self.anchorDialog.ClickPointable):
             #set child anchor pos info
-            self.posx = self.anchorDialog.childAnchor.mapToGlobal(QPoint(0,0)).x()
-            self.posy = self.anchorDialog.childAnchor.mapToGlobal(QPoint(0,0)).y()
+            self.posx = self.anchorDialog.childAnchor.x() - self.anchorDialog.x()
+            self.posy = self.anchorDialog.childAnchor.y() - self.anchorDialog.y()
             self.posWidth = self.anchorDialog.childAnchor.width()
             self.posHeight = self.anchorDialog.childAnchor.height()
+            self.lbl_uploadImg.setClickableArea(self.posx,self.posy,self.posWidth,self.posHeight)
         else:
+            self.posx = None
+            self.posy = None
+            self.posWidth = None
+            self.posHeight = None
+            self.lbl_uploadImg.setClickableArea(None,None,None,None)
             pass
         # self.anchorDialog.setPixmap(pixmap)
+        self.lbl_uploadImg.setPixmap(pixmap)
         pass
 
     def mousePressEvent(self,event):

@@ -4,8 +4,8 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QDi
 QAction, QTabWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QFrame,QLabel,QSlider,QScrollArea,QCheckBox,QSizePolicy,QFileDialog,QDockWidget,\
      QDialog,QTextEdit,QSizeGrip,QToolButton,QGraphicsOpacityEffect
 from PyQt5 import QtWidgets
-from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPaintDevice,QPainter,QPen
-from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent,QTimer,QPoint,pyqtSignal
+from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPaintDevice,QPainter,QPen,QColor
+from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent,QTimer,QPoint,pyqtSignal,QRect
 from Setting import Settings
 from Mybutton import TitleButton,CloseButton
 from wordprocessor.wordprocessor import MyTextEditDialog
@@ -564,7 +564,10 @@ class QAnchorDialog(QLabel):
         self.move(posx,posy)
         
     def paintEvent(self,event):
-        
+
+        #just keep pixmap but don't show it but background
+
+        return
         if(self.ClickPointable):
             pass
         else:
@@ -699,6 +702,12 @@ class MyDropableLable(QLabel):
         self.setMaximumSize(400,400)
         self.resize(200,200)
         self.setAlignment(Qt.AlignCenter)
+        
+        self.posx = None
+        self.posy = None
+        self.poswidth = None
+        self.posheight = None
+
         # self.setScaledContents(True)
         self.__initUI()
     def __initUI(self):
@@ -711,6 +720,14 @@ class MyDropableLable(QLabel):
             e.accept()
         else:
             e.ignore()
+    def setClickableArea(self,posx,posy,poswidth,posheight):
+
+        self.posx = posx
+        self.posy = posy
+        self.poswidth = poswidth
+        self.posheight = posheight
+        self.update()
+
     def dropEvent(self,e):
         
         m = e.mimeData()
@@ -723,6 +740,19 @@ class MyDropableLable(QLabel):
             return
         
         self.setPixmap(QPixmap(m.urls()[0].toLocalFile()))
+
+    def paintEvent(self,event):
+        
+        if(self.posx is None):
+            super().paintEvent(event)
+            return
+        painter = QPainter(self.pixmap())
+        pen = QPen(QColor(*Settings.childAnchorMarkLineColor))
+        pen.setWidth(Settings.childAnchorMarkLineWidth)
+        painter.setPen(pen)
+        painter.drawRect(QRect(self.posx,self.posy,self.poswidth,self.posheight))
+        super().paintEvent(event)
+        pass
 
 class MyWebView(MyFrame):
     def __init__(self,parent):

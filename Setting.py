@@ -40,6 +40,8 @@ class Settings:
     projectAlreadyExist = 10
     projectNameNotSpecified = 11
     commonOpacity = 0.2
+    childAnchorMarkLineColor = (255,0,0,255)
+    childAnchorMarkLineWidth = 2
 
     projectFileManagementError = "Cant' delete original project directory"
     projectStepCreationError = "Error occured in Step Creation"
@@ -61,9 +63,10 @@ class Settings:
     bias = 0
     prefixWidth = 2
     gripSize = 20
+
     #dropbox
     # access_token = 'jen1g6kqkAAAAAAAAAAATH8b-4NGTrbgjJ2rK_6UiXqSGUNcYCLgL6kdCbGGNrVR'
-    access_token = 'jen1g6kqkAAAAAAAAAAAXksuCh8ZFAY2DYyOitrD_nZegX9i08WNG-frbVG-NSqT'
+    access_token = 'jen1g6kqkAAAAAAAAAAAX5_qMKa7ceWSE5BYqDpY0OPwo8QaaFHPwYd78fgXV8n8'
 
     
 
