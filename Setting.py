@@ -66,7 +66,7 @@ class Settings:
 
     #dropbox
     # access_token = 'jen1g6kqkAAAAAAAAAAATH8b-4NGTrbgjJ2rK_6UiXqSGUNcYCLgL6kdCbGGNrVR'
-    access_token = 'jen1g6kqkAAAAAAAAAAAX5_qMKa7ceWSE5BYqDpY0OPwo8QaaFHPwYd78fgXV8n8'
+    access_token = 'jen1g6kqkAAAAAAAAAAAYujFMrNt8UfFD8cEyyc3A_wjl0cusRbXnCJ-Nu7RlUal'
 
     
 

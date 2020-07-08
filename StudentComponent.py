@@ -176,11 +176,13 @@ class CommonLessonClickStepItem(CommonLessonItem):
     
     def __init__(self,parent):
         super(CommonLessonClickStepItem,self).__init__(parent)
+        self.isFirstShow = True
         self.__initUI()    
         
     
     def __initUI(self):
         self.lbl_icon.setPixmap(QPixmap('icons/clickstep.png'))
+
 
 
 class CommonLessonMatchStepItem(CommonLessonItem):
@@ -287,7 +289,7 @@ class StudentBodyWidget(MyContainer):
         # self.initializeObject(path)
 
     def processMatchByAnchor(self,anchorUrl,posx=None,posy=None,posWidth=None,posHeight=None):
-        self.anchorDlg = QAnchorDialog(None)
+        # self.anchorDlg = QAnchorDialog(None)
         if(anchorUrl is not None):
             self.currentAnchorPixmapUrl = (anchorUrl)
         else:
@@ -307,12 +309,12 @@ class StudentBodyWidget(MyContainer):
                 pass
             
             if posx <1000  and posy <1000:
-                self.anchorDlg.ClickPointable = True
+                self.anchorDlg.ClickPointable = False
                 # self.anchorDlg.posyToEmit = posy
                 # self.anchorDlg.posxToEmit = posx
-                pixmap = self.anchorDlg.pixmap()
-                drawRectToPixmap(posx,posy,posWidth,posHeight,pixmap)
-                self.anchorDlg.update()
+                self.anchorDlg.drawRect(posx,posy,posWidth,posHeight)
+
+                # self.anchorDlg.update()
                 # self.anchorDlg.setAttribute(Qt.WA_TranslucentBackground)
                 
 
@@ -322,6 +324,7 @@ class StudentBodyWidget(MyContainer):
                 self.anchorDlg.ClickPointable = False
                 self.anchorDlg.posyToEmit = None
                 self.anchorDlg.posxToEmit = None
+                self.anchorDlg.drawRect(None,None,None,None)
                 # self.anchorDlg.setAttribute(Qt.FramelessWindowHint)
                 # self.anchorDlg.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
                 pass
@@ -697,7 +700,6 @@ class StudentBodyWidget(MyContainer):
                     break
             self.currentItemChanged()
             pass
-        
 
 class MyProjectListWidget(QListWidget):
     def __init__(self,parent):

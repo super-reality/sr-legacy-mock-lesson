@@ -413,6 +413,8 @@ class QAnchorDialog(QLabel):
 
         self.posxToEmit = None
         self.posyToEmit = None
+        self.posWidthToEmit = None
+        self.posHeightToEmit = None
         
         #set object name for style
         self.setObjectName("AnchorDlg")
@@ -494,8 +496,8 @@ class QAnchorDialog(QLabel):
         self.move(posx + Settings.bias,posy + Settings.bias)
         self.pixmapChanged.emit()
 
-        self.posxToEmit = event.globalX() - posx
-        self.posyToEmit = event.globalY() - posy
+        # self.posxToEmit = event.globalX() - posx
+        # self.posyToEmit = event.globalY() - posy
 
         self.sig_mouseClick.emit(self.posxToEmit,self.posyToEmit)
 
@@ -563,10 +565,23 @@ class QAnchorDialog(QLabel):
             posy = screenH - self.height()
         self.move(posx,posy)
         
+    def drawRect(self,posx,posy,poswidth,posheight):
+        
+        self.posxToEmit = posx
+        self.posyToEmit = posy
+        self.posWidthToEmit = poswidth
+        self.posHeightToEmit = posheight
+        self.update()
+        pass
     def paintEvent(self,event):
 
         #just keep pixmap but don't show it but background
-
+        if(self.posxToEmit is not None):
+            painter = QPainter(self)
+            pen = QPen(QColor(*Settings.childAnchorMarkLineColor))
+            pen.setWidth(Settings.childAnchorMarkLineWidth)
+            painter.setPen(pen)
+            painter.drawRect(self.posxToEmit,self.posyToEmit,self.posWidthToEmit,self.posHeightToEmit)
         return
         if(self.ClickPointable):
             pass

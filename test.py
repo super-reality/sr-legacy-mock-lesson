@@ -22,7 +22,9 @@ class MainWindowExample(QWidget):
         except Exception as e:
             print(e)
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    main_widow = MainWindowExample()
-    main_widow.show()
-    sys.exit(app.exec_())
+    x = [2,3,4]
+    print(x[-1])
+    # app = QApplication(sys.argv)
+    # main_widow = MainWindowExample()
+    # main_widow.show()
+    # sys.exit(app.exec_())
