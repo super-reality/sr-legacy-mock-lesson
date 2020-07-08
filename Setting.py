@@ -59,7 +59,7 @@ class Settings:
     dropboxCache = "~/.dbdownload.cache"
     projectStudentPath = "ProjectsForStudent"
     projectTeacherPath = "ProjectsForTeacher"
-    threshold = 0.95
+    threshold = 0.8
     bias = 0
     prefixWidth = 2
     gripSize = 20

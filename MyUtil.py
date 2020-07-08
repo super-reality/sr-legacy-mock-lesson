@@ -4,7 +4,8 @@ import cv2
 from PyQt5 import QtGui
 from PyQt5.QtGui import QImage
 from PyQt5.QtWidgets import QWidget,QFileDialog
-
+from PyQt5.QtCore import QRect
+from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPaintDevice,QPainter,QPen,QColor
 from desktopmagic.screengrab_win32 import (
 getDisplayRects, saveScreenToBmp, saveRectToBmp, getScreenAsImage,
 getRectAsImage, getDisplaysAsImages)
@@ -75,7 +76,7 @@ def maintain_aspect_ratio_resize(image, width=None, height=None, inter=cv2.INTER
     return cv2.resize(image, dim, interpolation=inter)
 
 #this function matches the template by resizing template from 0.7x to 1.3x of the original size to cater different screen sizes..
-def match_image(url):
+def match_image(url,parentx,parenty,parentwidth,parentheight):
     gray_image = getWholeScreen()
     template = loadImageFromUrl(url)
     (tH, tW) = template.shape[::-1]  # get the width and height
@@ -106,6 +107,13 @@ def match_image(url):
         for point in zip(*position[::-1]):  # draw the rectangle around the matched template
             found = 1
             (X,Y,W,H,R) = (int(point[0]),int(point[1]),int( tW / r),int(tH / r) , r)
+            
+            if X < parentx or X + W > parentx +parentwidth or Y < parenty or Y + H > parenty + parentheight:
+                break
+            else:
+                (X,Y,W,H,R) = (0,0,0,0,0)
+                found = 0
+                continue
             break
 
         if (found):
@@ -165,3 +173,13 @@ def openFileDlg(parent = None):
     imagePath = fname[0]
     if(imagePath is not None and len(imagePath)):
         return imagePath
+
+def drawRectToPixmap(self,x,y,w,h,pixmap=None):
+    if(pixmap is None):
+        return
+    painter = QPainter(pixmap)
+    pen = QPen(QColor(*Settings.childAnchorMarkLineColor))
+    pen.setWidth(Settings.childAnchorMarkLineWidth)
+    painter.setPen(pen)
+    painter.drawRect(QRect(x,y,w,h))
+    pass

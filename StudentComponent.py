@@ -9,7 +9,7 @@ from Mybutton import *
 from Container import *
 from ProjectMgr.LocalMgr import LocalProjectMgr
 import os
-from MyUtil import match_image
+from MyUtil import match_image,drawRectToPixmap
 import logging
 
 class StudentHeaderToolBar(MyFrame):
@@ -61,18 +61,25 @@ class StudentHeaderToolBar(MyFrame):
         self.bt_search.clicked.connect(self.sig_bt_search)
 
 class CommonLessonItem(MyFrame):
-    sig_ItemHeaderIcon = pyqtSignal(str,int,int)
-    def __init__(self,parent):
+    sig_ItemHeaderIcon = pyqtSignal(str,int,int,int,int)
+    def __init__(self,parent,isHeader=False):
 
         super(CommonLessonItem,self).__init__(parent)
         self.lbl_title = CommonHeaderLabel(self)
         self.lbl_description = CommonDescriptionLabel(self)
         self.lbl_icon = CommonHeaderIcon(self)
+        self.isHeader = isHeader
+        if(self.isHeader):
+            pass
+        else:
+            self.lbl_uploadImg = MyDropableLable(self)
         self.__initUI()
         self.isChild = False
         self.anchorPixmapUrl = None
         self.posx = None
         self.posy = None
+        self.posWidth = None
+        self.posHeight = None
 
 
     def __initUI(self):
@@ -82,6 +89,11 @@ class CommonLessonItem(MyFrame):
         self.layout.addWidget(self.lbl_title,0,0,1,19)
         self.layout.addWidget(self.lbl_icon,0,19,1,1)
         self.layout.addWidget(self.lbl_description,1,0,1,20)
+        if(self.isHeader):
+            pass
+        else:
+            self.layout.addWidget(self.lbl_uploadImg,2,0,20,20)
+            
         
         #initialize info
         self.setInfo("Title","Description",None)
@@ -89,32 +101,49 @@ class CommonLessonItem(MyFrame):
 
         #event binding
         self.lbl_icon.mousePressEvent = self.processMatchEvent
+
+        
     
     def processMatchEvent(self,event):
-        self.sig_ItemHeaderIcon.emit(self.anchorPixmapUrl,self.posx,self.posy)
+        self.sig_ItemHeaderIcon.emit(self.anchorPixmapUrl,self.posx,self.posy,self.posWidth,self.posHeight)
         
-
+    def showEvent(self,event):
+        #if clickstep show child anchor
+        if(self.posx is not None):
+            self.lbl_uploadImg.setClickableArea(self.posx,self.posy,self.posWidth,self.posHeight)
+        else:
+            pass
     def display(self,isminimized=False):
 
         if(isminimized):
             self.lbl_icon.hide()
             self.lbl_description.hide()
+            if(self.isHeader):
+                pass
+            else:
+                self.lbl_uploadImg.hide()
         else:
             self.lbl_icon.show()
             self.lbl_description.show()
+            if(self.isHeader):
+                pass
+            else:
+                self.lbl_uploadImg.hide()
     
 
-    def setInfo(self,title,description,iconPath):
+    def setInfo(self,title,description,iconPath,anchorUrl=None):
         self.lbl_title.setText(title)
         self.lbl_description.setText(description)
         if(iconPath is not None):
             self.lbl_icon.setPixmap(QPixmap(iconPath))
+        if(anchorUrl is not None):
+            self.lbl_uploadImg.setPixmap(QPixmap(anchorUrl))
 
 class CommonLessonOverview(CommonLessonItem):
     
     def __init__(self,parent):
 
-        super(CommonLessonOverview,self).__init__(parent)
+        super(CommonLessonOverview,self).__init__(parent,isHeader=True)
         self.isMinimized = False
         self.__initUI()
     
@@ -152,6 +181,7 @@ class CommonLessonClickStepItem(CommonLessonItem):
     
     def __initUI(self):
         self.lbl_icon.setPixmap(QPixmap('icons/clickstep.png'))
+
 
 class CommonLessonMatchStepItem(CommonLessonItem):
     
@@ -256,7 +286,7 @@ class StudentBodyWidget(MyContainer):
         self.window().moveEvent = self.processMoveEvent
         # self.initializeObject(path)
 
-    def processMatchByAnchor(self,anchorUrl,posx=None,posy=None):
+    def processMatchByAnchor(self,anchorUrl,posx=None,posy=None,posWidth=None,posHeight=None):
         self.anchorDlg = QAnchorDialog(None)
         if(anchorUrl is not None):
             self.currentAnchorPixmapUrl = (anchorUrl)
@@ -265,7 +295,7 @@ class StudentBodyWidget(MyContainer):
         if(self.currentAnchorPixmapUrl is not None):
             found = 0
             try:
-                (found,X,Y,W,H,R) = match_image(self.currentAnchorPixmapUrl)
+                (found,X,Y,W,H,R) = match_image(self.currentAnchorPixmapUrl,self.window().x(),self.window().y(),self.window().width(),self.window().height())
             except:
                 logging.exception("cv template matching issue")
 
@@ -276,13 +306,14 @@ class StudentBodyWidget(MyContainer):
                 
                 pass
             
-            
-            self.anchorDlg.setStyleSheet('border:2px  solid blue')
             if posx <1000  and posy <1000:
                 self.anchorDlg.ClickPointable = True
-                self.anchorDlg.posyToEmit = posy
-                self.anchorDlg.posxToEmit = posx
-                self.anchorDlg.setAttribute(Qt.WA_TranslucentBackground)
+                # self.anchorDlg.posyToEmit = posy
+                # self.anchorDlg.posxToEmit = posx
+                pixmap = self.anchorDlg.pixmap()
+                drawRectToPixmap(posx,posy,posWidth,posHeight,pixmap)
+                self.anchorDlg.update()
+                # self.anchorDlg.setAttribute(Qt.WA_TranslucentBackground)
                 
 
             else:
@@ -292,7 +323,7 @@ class StudentBodyWidget(MyContainer):
                 self.anchorDlg.posyToEmit = None
                 self.anchorDlg.posxToEmit = None
                 # self.anchorDlg.setAttribute(Qt.FramelessWindowHint)
-                self.anchorDlg.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
+                # self.anchorDlg.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
                 pass
             self.anchorDlg.resize(H,W)
             self.anchorDlg.move(X,Y)
@@ -357,11 +388,11 @@ class StudentBodyWidget(MyContainer):
         
         #initializeHeader
         self.itemHeader = CommonLessonOverview(self)
-        if self.data.header.imageName is None:
+        if self.data.header.anchorImageName is None:
             self.itemHeader.setInfo(self.data.header.title,self.data.header.description,None)
             pass
         else:
-            self.itemHeader.setInfo(self.data.header.title,self.data.header.description,os.path.join(self.projectPath, self.data.header.imageName))
+            self.itemHeader.setInfo(self.data.header.title,self.data.header.description,os.path.join(self.projectPath, self.data.header.anchorImageName))
             self.itemHeader.anchorPixmapUrl = os.path.join(self.projectPath,self.data.header.anchorImageName)
             self.itemHeader.sig_ItemHeaderIcon.connect(self.processMatchByAnchor)
         
@@ -393,20 +424,22 @@ class StudentBodyWidget(MyContainer):
             elif(self.data.lessons[idx].type == Settings.clickStep):
                 curInfo = self.data.lessons[idx]
                 item = CommonLessonClickStepItem(self)
-                item.setInfo(curInfo.title,curInfo.description,None)
                 if(curInfo.anchorPixmap is None):
                     item.anchorPixmapUrl = None
                     pass
                 else:
                     item.anchorPixmapUrl = os.path.join(self.projectPath,curInfo.anchorPixmap)
+                item.setInfo(curInfo.title,curInfo.description,None,anchorUrl=item.anchorPixmapUrl)
                 item.hide()
                 self.layout.addWidget(item)
                 self.itemList.append(item)
                 item.installEventFilter(self)
                 item.isChild = (curInfo.isChild == "true")
                 try:
-                    item.posx = curInfo.posx
-                    item.posy = curInfo.posy
+                    item.posx = curInfo.spotposx
+                    item.posy = curInfo.spotposy
+                    item.posWidth = curInfo.spotwidth
+                    item.posHeight = curInfo.spotheight
                 except:
                     pass
                 item.sig_ItemHeaderIcon.connect(self.processMatchByAnchor)
@@ -479,6 +512,8 @@ class StudentBodyWidget(MyContainer):
     
     def showEvent(self,event):
         # self.moveNextItem()
+        if(self.itemHeader is not None):
+            self.itemHeader.show()
         pass
     def hideAllNextAndNestedItems(self,isHide=True):
         
