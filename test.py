@@ -1,30 +1,46 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication,QFrame,QWidget,QVBoxLayout
-from PyQt5.QtCore import Qt
-import sys
+import boto3
+import os
+from Setting import Settings
 
+def upload_files(path):
+    session = boto3.Session(
+        aws_access_key_id = Settings.aws_access_key_id,
+        aws_secret_access_key= Settings.aws_secret_access_key,
+        region_name= Settings.region_name
+    )
+    s3 = session.resource('s3')
+    bucket = s3.Bucket('openverse-lms')
+ 
+    for subdir, dirs, files in os.walk(path):
+        for file in files:
+            full_path = os.path.join(subdir, file)
+            with open(full_path, 'rb') as data:
+                path = path.replace('/','')
+                bucket.put_object(Key=full_path[len(path)+1:], Body=data)
+ 
+def download_dir(dist = '', local='/tmp', bucket='your_bucket'):
 
-class MainWindowExample(QWidget):
-    def __init__(self, parent=None):
-        try:
-            QMainWindow.__init__(self, parent)
-            # self.setStyleSheet("border: 11px solid ;")
-            # self.setWindowOpacity(0.3)
-            self.test = QWidget(self)
-            self.layout = QVBoxLayout(self)
-            self.layout.addWidget(self.test)
-            self.test.setWindowOpacity(0.5)
-            self.test.setStyleSheet('background-color:red')
-            self.test.resize(300,300)
-            self.setAttribute(Qt.WA_NoSystemBackground, True)
-            self.setWindowFlags(Qt.FramelessWindowHint)
-            self.setAttribute(Qt.WA_TranslucentBackground)
-            
-        except Exception as e:
-            print(e)
-if __name__ == '__main__':
-    x = [2,3,4]
-    print(x[-1])
-    # app = QApplication(sys.argv)
-    # main_widow = MainWindowExample()
-    # main_widow.show()
-    # sys.exit(app.exec_())
+    session = boto3.Session(
+        aws_access_key_id = Settings.aws_access_key_id,
+        aws_secret_access_key= Settings.aws_secret_access_key,
+        region_name= Settings.region_name
+    )
+    
+    client  = session.client('s3')
+    resource = session.resource('s3')
+
+    paginator = client.get_paginator('list_objects')
+    for result in paginator.paginate(Bucket=bucket, Delimiter='/', Prefix=dist):
+        if result.get('CommonPrefixes') is not None:
+            for subdir in result.get('CommonPrefixes'):
+                download_dir(client, resource, subdir.get('Prefix'), local, bucket)
+        for file in result.get('Contents', []):
+            dest_pathname = os.path.join(local, file.get('Key'))
+            if not os.path.exists(os.path.dirname(dest_pathname)):
+                os.makedirs(os.path.dirname(dest_pathname))
+            resource.meta.client.download_file(bucket, file.get('Key'), dest_pathname)
+
+if __name__ == "__main__":
+    pass
+    # upload_files('ProjectsForTeacher/')
+    # download_dir(local='ProjectsForStudent', bucket=Settings.bucketName)

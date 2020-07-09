@@ -322,7 +322,7 @@ class MyChildAnchorWidget(CommonFramelessWidget):
 
     def processParentMoveEvent(self,deltax,deltay):
 
-        if(deltax is None or deltax > 10000):
+        if(deltax is None or deltax > 10000 or deltax < 0 or deltay < 0 or deltay >10000):
             self.moveEvent(None)
         else:
             self.move(self.mapToGlobal(QPoint(0,0)).x() + deltax,self.mapToGlobal(QPoint(0,0)).y() + deltay)

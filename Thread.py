@@ -25,14 +25,18 @@ class UpDownLoadThread(MyCommonThread):
     def __init__(self,parent,**kwargs):
         MyCommonThread.__init__(self,parent=parent,daemon=True)
         self.isUpLoad = True
+        self.currentProjectName = None
     def run(self):
         self.parent.sig_startUpDown.emit(0)
         if(self.isUpLoad == True):
             #upload project
-            UploadProject(self.parent.projectmgr.getUploadPath())
+            UploadProject(self.parent.projectmgr.currentProjectName)
             pass
         else:
-            DownloadProject(self.parent.projectmgr.getDownLoadPath())
+            if(self.currentProjectName is None):
+                DownloadProject(ProjectName='')
+            else:
+                DownloadProject(ProjectName=self.currentProjectName)
             #download project
             pass
         self.parent.sig_startUpDown.emit(1)

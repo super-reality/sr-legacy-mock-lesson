@@ -59,14 +59,18 @@ class Settings:
     dropboxCache = "~/.dbdownload.cache"
     projectStudentPath = "ProjectsForStudent"
     projectTeacherPath = "ProjectsForTeacher"
-    threshold = 0.8
+    threshold = 0.9
     bias = 0
     prefixWidth = 2
     gripSize = 20
 
     #dropbox
     # access_token = 'jen1g6kqkAAAAAAAAAAATH8b-4NGTrbgjJ2rK_6UiXqSGUNcYCLgL6kdCbGGNrVR'
-    access_token = 'jen1g6kqkAAAAAAAAAAAYujFMrNt8UfFD8cEyyc3A_wjl0cusRbXnCJ-Nu7RlUal'
+    access_token = 'jen1g6kqkAAAAAAAAAAAZoeGMDPQCZVHSIpKGCWP8qdnMTBs7qoWhMN_ZEGpPatX'
+    aws_access_key_id = 'AKIAR5KZMOTEDJK5ATHO'
+    aws_secret_access_key='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'
+    region_name=None
+    bucketName = 'openverse-lms'
 
     
 

@@ -1300,6 +1300,9 @@ class TeacherTabWidget(MyContainer):
         #event binding
         self.lookstep_page.procDone.connect(self.gotoStudentTab)
 
+    def getCurrentProject(self):
+        
+        pass
     def getValidation(self):
         return self.lookstep_page.getValidation()
     def hideAllButCurrent(self):

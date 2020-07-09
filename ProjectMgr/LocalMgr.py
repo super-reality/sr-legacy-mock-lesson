@@ -17,14 +17,15 @@ class LocalProjectMgr:
     def __init__(self):
         #create project local directory if not exist.
         
-        self.__localPathForTeacher = os.path.join(os.getcwd(),"ProjectsForTeacher")
-        self.__localPathForStudent = os.path.join(os.getcwd(),"ProjectsForStudent")
+        self.__localPathForTeacher = os.path.join(os.getcwd(),Settings.projectTeacherPath)
+        self.__localPathForStudent = os.path.join(os.getcwd(),Settings.projectStudentPath)
         self.posx = None
         self.posy = None
         self.posWidth = None
         self.posHeight = None
         self.projectPath = None
         self.curStep = None
+        self.currentProjectName = None
         self.json = None
 
         self.__createDir()
@@ -56,6 +57,8 @@ class LocalProjectMgr:
         if it is successfully created, then return True, else return error text
         """
         
+        self.currentProjectName = projectName
+
         if(projectName is not None):
             self.projectPath = os.path.join(self.__localPathForTeacher,str(projectName))
         else:

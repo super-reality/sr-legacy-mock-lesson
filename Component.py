@@ -61,6 +61,7 @@ class MyTableWidget(QWidget):
             self.waitForLoading.start()
         else:
             self.waitForLoading.stop()
+            self.sig_bt_carmin()
             
 
     def sig_bt_carmin(self):
@@ -70,6 +71,7 @@ class MyTableWidget(QWidget):
     def sig_bt_signal(self):
         if(self.threadForUpDown.isAlive() == False):
             self.threadForUpDown = UpDownLoadThread(self)
+            self.threadForUpDown.currentProjectName = self.projectmgr.currentProjectName
             self.threadForUpDown.isUpLoad = False
             self.threadForUpDown.start()
         pass
