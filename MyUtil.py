@@ -82,7 +82,9 @@ def match_image(url,parentx,parenty,parentwidth,parentheight):
     (tH, tW) = template.shape[::-1]  # get the width and height
     # match the template using cv2.matchTemplate
     match = cv2.matchTemplate(gray_image, template, cv2.TM_CCOEFF_NORMED)
-    threshold = Settings.threshold
+    threshold = Settings.getSetting()['tolerance']
+    print(threshold)
+    
     position = np.where(match >= threshold)  # get the location of template in the image
     
     found = 0
@@ -163,6 +165,7 @@ def getScreenSize():
     entireScreen = getScreenAsImage()
     image = np.array(entireScreen)
     return image.shape[0],image.shape[1]
+
 def openFileDlg(parent = None):
     
     """

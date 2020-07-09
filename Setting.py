@@ -66,9 +66,7 @@ class Settings:
 
     #dropbox
     # access_token = 'jen1g6kqkAAAAAAAAAAATH8b-4NGTrbgjJ2rK_6UiXqSGUNcYCLgL6kdCbGGNrVR'
-    access_token = 'jen1g6kqkAAAAAAAAAAAZoeGMDPQCZVHSIpKGCWP8qdnMTBs7qoWhMN_ZEGpPatX'
-    aws_access_key_id = 'AKIAR5KZMOTEDJK5ATHO'
-    aws_secret_access_key='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'
+    
     region_name=None
     bucketName = 'openverse-lms'
 

@@ -4,5 +4,6 @@
     "AdminWinSize":[400,800],
     "BackgroundColor":"background-color:rgb(107,107,107)",
     "treeiconpath":"icons/stack.png",
-    "iconMinHeight":30
+    "iconMinHeight":30,
+    "tolerance":0.8
 }
