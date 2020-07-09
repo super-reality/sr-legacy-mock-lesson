@@ -83,7 +83,6 @@ def match_image(url,parentx,parenty,parentwidth,parentheight):
     # match the template using cv2.matchTemplate
     match = cv2.matchTemplate(gray_image, template, cv2.TM_CCOEFF_NORMED)
     threshold = Settings.getSetting()['tolerance']
-    print(threshold)
     
     position = np.where(match >= threshold)  # get the location of template in the image
     
@@ -103,7 +102,7 @@ def match_image(url,parentx,parenty,parentwidth,parentheight):
         r = template.shape[1] / float(resized.shape[1])
 
         match = cv2.matchTemplate(gray_image, resized, cv2.TM_CCOEFF_NORMED)
-        threshold = Settings.threshold
+        threshold = Settings.getSetting()['tolerance']
         position = np.where(match >= threshold)  # get the location of template in the image
 
         for point in zip(*position[::-1]):  # draw the rectangle around the matched template
