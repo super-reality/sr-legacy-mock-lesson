@@ -65,7 +65,7 @@ class Settings:
     gripSize = 20
 
     #dropbox
-    access_token = 'jen1g6kqkAAAAAAAAAAATH8b-4NGTrbgjJ2rK_6UiXqSGUNcYCLgL6kdCbGGNrVR'
+    # access_token = 'jen1g6kqkAAAAAAAAAAATH8b-4NGTrbgjJ2rK_6UiXqSGUNcYCLgL6kdCbGGNrVR'
     
     region_name=None
     bucketName = 'openverse-lms'
