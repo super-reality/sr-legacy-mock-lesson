@@ -1342,7 +1342,9 @@ class TeacherTabWidget(MyContainer):
         self.lookstep_page.procDone.connect(self.gotoStudentTab)
 
     def editProject(self):
+        # this is for edit project
         self.gotoLooksteppage(param=Settings.gotoLessson)
+
         pass
     def createNewProject(self):
         name, done1 = QInputDialog.getText(self, 'Input Dialog', 'Enter your project name:')
