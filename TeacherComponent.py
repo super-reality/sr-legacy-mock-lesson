@@ -1,14 +1,14 @@
 import sys
 from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QMessageBox,\
 QAction, QTabWidget,QGridLayout,QFrame,QLabel,QSlider,QScrollArea,QCheckBox,QSizePolicy,QFileDialog,QDockWidget, QDialog,QTreeView,\
-    QLineEdit, QTreeWidget, QTreeWidgetItem,QAbstractItemView,QAbstractScrollArea,QPlainTextEdit,QRadioButton
+    QLineEdit, QTreeWidget, QTreeWidgetItem,QAbstractItemView,QAbstractScrollArea,QPlainTextEdit,QRadioButton,QInputDialog
 from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPaintDevice,QPainter,QPen
 from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent,QTimer,pyqtSignal, QPoint
 from Setting import Settings
 from Mybutton import *
 from Container import *
 from PyQt5 import QtWidgets
-
+import os
 
 class MyFrame(QtWidgets.QWidget):
 
@@ -230,23 +230,31 @@ class TeacherFirstToolbar(MyFrame):
         return hbox
 
 class TeacherSecondToolbar(MyFrame):
-
+    sig_NewProject = pyqtSignal()
+    sig_EditProject = pyqtSignal()
+    sig_DeleteProject = pyqtSignal()
+    sig_SearchProject = pyqtSignal()
+    sig_Social = pyqtSignal()
+    sig_UploadToCloud = pyqtSignal()
+    sig_PlayResume = pyqtSignal()
     def __init__(self,parent):
         super(TeacherSecondToolbar, self).__init__(parent)
         self.__initUI()
         
     def __initUI(self):
         hbox = MyHBoxLayout(self)
-        self.bt_edit  = EditButton(self)
         self.bt_newfolder = NewFolderButton(self)
+        self.bt_edit  = EditButton(self)
+        self.bt_delete = DeleteButton(self)
         self.bt_searchplus = SearchPlusButton(self)
 
         self.bt_social = SocialButton(self)
         self.bt_cloud = CloudButton(self)
         self.bt_resume = PlayResumeButton(self)
 
-        hbox.addWidget(self.bt_edit)
         hbox.addWidget(self.bt_newfolder)
+        hbox.addWidget(self.bt_edit)
+        hbox.addWidget(self.bt_delete)
         hbox.addWidget(self.bt_searchplus)
         
         hbox.addStretch(1)
@@ -254,6 +262,15 @@ class TeacherSecondToolbar(MyFrame):
         hbox.addWidget(self.bt_cloud)
         hbox.addWidget(self.bt_resume)
         hbox.setContentsMargins(0,0,0,0)
+
+        #bind event
+        self.bt_newfolder.clicked.connect(self.sig_NewProject)
+        self.bt_edit.clicked.connect(self.sig_EditProject)
+        self.bt_delete.clicked.connect(self.sig_DeleteProject)
+        self.bt_searchplus.clicked.connect(self.sig_SearchProject)
+        self.bt_social.clicked.connect(self.sig_Social)
+        self.bt_cloud.clicked.connect(self.sig_UploadToCloud)
+        self.bt_resume.clicked.connect(self.sig_PlayResume)
         return hbox
 
 class TeacherSecondLessonToolbar(MyFrame):
@@ -1078,8 +1095,11 @@ class TeacherLandingPage(MyContainer):
 
         self.toolbarfirst  = TeacherFirstToolbar(self)
         self.toolbarsec = TeacherSecondToolbar(self)
+
         self.tree = MyTree(self)
         self.toolbarfirst.bt_search.clicked.connect(self.find_item_with_name)
+
+        
 
         vbox = MyVBoxLayout(self)
 
@@ -1090,7 +1110,22 @@ class TeacherLandingPage(MyContainer):
         vbox.addWidget(self.tree)
         vbox.addStretch(1)
 
+        #bind event
+        self.tree.currentItemChanged.connect(self.currentItemChanged)
+
         return vbox
+
+    def currentItemChanged(self,item):
+        paths = []
+        while(item is not None):
+            paths.insert(0,item.text(0))
+            item = item.parent()
+        curPath = ""
+        for path in paths:
+            curPath = os.path.join(curPath,path)
+
+        print(curPath)
+
 
     def find_item_with_name(self):
 
@@ -1293,16 +1328,48 @@ class TeacherTabWidget(MyContainer):
 
         # viewing only current page and hide all others
         self.hideAllButCurrent()
-        #event process to go to landing page
-        self.landing_page.toolbarsec.bt_edit.clicked.connect(self.gotoLooksteppage)
-        self.lookstep_page.firsttoolbar.bt_book.clicked.connect(self.gotoLandingpage)
         
         #event binding
+        self.landing_page.toolbarsec.sig_EditProject.connect(self.editProject)
+        self.landing_page.toolbarsec.sig_NewProject.connect(self.createNewProject)
+        self.landing_page.toolbarsec.sig_DeleteProject.connect(self.deleteProject)
+        self.landing_page.toolbarsec.sig_SearchProject.connect(self.searchProject)
+        self.landing_page.toolbarsec.sig_Social.connect(self.gotoSocial)
+        self.landing_page.toolbarsec.sig_UploadToCloud.connect(self.upLoadProjectToCloud)
+        self.landing_page.toolbarsec.sig_PlayResume.connect(self.playLesson)
+
+        self.lookstep_page.firsttoolbar.bt_book.clicked.connect(self.gotoLandingpage)
         self.lookstep_page.procDone.connect(self.gotoStudentTab)
 
-    def getCurrentProject(self):
-        
+    def editProject(self):
+        self.gotoLooksteppage(param=Settings.gotoLessson)
         pass
+    def createNewProject(self):
+        name, done1 = QInputDialog.getText(self, 'Input Dialog', 'Enter your project name:')
+        if(done1):
+            row_item = MyTreeItem(str(name),isParent=False)
+            self.landing_page.tree.TreeRoot.addChild(row_item)
+            self.landing_page.tree.setCurrentItem(row_item)
+            #create project empty structure
+
+        else:
+            pass
+        pass
+    
+
+    def deleteProject(self):
+        pass
+
+    def searchProject(self):
+        pass
+    def gotoSocial(self):
+        pass
+    def upLoadProjectToCloud(self):
+        pass
+    def playLesson(self):
+        pass
+
+    
     def getValidation(self):
         return self.lookstep_page.getValidation()
     def hideAllButCurrent(self):

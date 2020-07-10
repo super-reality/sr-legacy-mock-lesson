@@ -49,7 +49,9 @@ class LocalProjectMgr:
         if os.path.exists(self.projectPath):
             shutil.rmtree(self.projectPath)
         
+    def createTemplateProject(treePath):
         
+        pass
     def createProject(self,projectName=None,title='title',description='description',tags=None,referPixmap=None,anchorPixmap=None):
         
         """

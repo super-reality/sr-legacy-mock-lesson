@@ -315,14 +315,11 @@ class StudentBodyWidget(MyContainer):
                 # self.anchorDlg.posyToEmit = posy
                 # self.anchorDlg.posxToEmit = posx
                 self.anchorDlg.drawRect(posx,posy,posWidth,posHeight)
-
                 # self.anchorDlg.update()
                 # self.anchorDlg.setAttribute(Qt.WA_TranslucentBackground)
                 
-
             else:
                 #set opacity
-                
                 self.anchorDlg.ClickPointable = False
                 self.anchorDlg.posyToEmit = None
                 self.anchorDlg.posxToEmit = None
