@@ -80,7 +80,7 @@ class MainWindow(QWidget):
 
 if __name__ == "__main__":
 
-    logging.basicConfig(filename='log.txt', filemode='w', format='%(message)s')
+    logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s',level=logging.INFO)
     app = QApplication(sys.argv)
     mw = MainWindow()
     mw.show()

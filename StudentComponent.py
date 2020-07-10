@@ -284,12 +284,14 @@ class StudentBodyWidget(MyContainer):
         self.timer.start()
         self.step = 0
         self.anchorDlg = QAnchorDialog(self)
+        self.anchorDlg.setWindowFlags(Qt.WindowStaysOnTopHint)
         #event binding
         self.window().moveEvent = self.processMoveEvent
         # self.initializeObject(path)
 
     def processMatchByAnchor(self,anchorUrl,posx=None,posy=None,posWidth=None,posHeight=None):
         # self.anchorDlg = QAnchorDialog(None)
+        logging.info("anchor url is :" + anchorUrl)
         if(anchorUrl is not None):
             self.currentAnchorPixmapUrl = (anchorUrl)
         else:
@@ -299,15 +301,15 @@ class StudentBodyWidget(MyContainer):
             try:
                 (found,X,Y,W,H,R) = match_image(self.currentAnchorPixmapUrl,self.window().x(),self.window().y(),self.window().width(),self.window().height())
             except:
-                logging.exception("cv template matching issue")
+                logging.error("cv template matching issue")
 
             if(found == 0):
-                print("not found")
+                logging.info('can \'t find the matching image')
                 return
             else:
-                
+                logging.info('Oh cool find the matching image')
                 pass
-            
+            logging.info("click point pos  is : %s, %s",posx,posy)
             if posx <1000  and posy <1000:
                 self.anchorDlg.ClickPointable = False
                 # self.anchorDlg.posyToEmit = posy
@@ -328,6 +330,8 @@ class StudentBodyWidget(MyContainer):
                 # self.anchorDlg.setAttribute(Qt.FramelessWindowHint)
                 # self.anchorDlg.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
                 pass
+            logging.info("anchor dialog is moving to %s, %s",X,Y)
+            logging.info("anchor dialog is resizing to %s, %s",H,W)
             self.anchorDlg.resize(H,W)
             self.anchorDlg.move(X,Y)
             self.anchorDlg.hideAllChild()
@@ -340,12 +344,16 @@ class StudentBodyWidget(MyContainer):
     def processAnchorAnimation(self):
         if(self.step>7 or self.step ==0):
             if(self.anchorDlg is not None):
-                self.anchorDlg.close()
+                logging.info("anchor dialgo is hiding now")
+                if(self.step<9):
+                    self.anchorDlg.hide()
             return
         if(self.step%2):
+            logging.info("anchor dialgo is showing now")
             self.anchorDlg.show()
             self.anchorDlg.hideAllChild()
         else:
+            logging.info("anchor dialgo is hiding now")
             self.anchorDlg.hide()
         self.step = self.step + 1
 

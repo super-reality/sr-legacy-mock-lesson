@@ -12,7 +12,7 @@ getRectAsImage, getDisplaysAsImages)
 
 from PIL.ImageQt import ImageQt
 from Setting import Settings
-
+import logging
 def getPixmapFromScreen(posx,posy,W,H):
         """
         get screenshot with posx,posy,w,h and save it to local file 
@@ -103,6 +103,7 @@ def match_image(url,parentx,parenty,parentwidth,parentheight):
 
         match = cv2.matchTemplate(gray_image, resized, cv2.TM_CCOEFF_NORMED)
         threshold = Settings.getSetting()['tolerance']
+        logging.info("threshold value is: %s, and scale value is : %s",threshold, scale)
         position = np.where(match >= threshold)  # get the location of template in the image
 
         for point in zip(*position[::-1]):  # draw the rectangle around the matched template
