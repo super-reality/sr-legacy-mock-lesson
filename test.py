@@ -41,6 +41,7 @@ def download_dir(dist = '', local='/tmp', bucket='your_bucket'):
             resource.meta.client.download_file(bucket, file.get('Key'), dest_pathname)
 
 if __name__ == "__main__":
+    
     pass
     # upload_files('ProjectsForTeacher/')
     # download_dir(local='ProjectsForStudent', bucket=Settings.bucketName)

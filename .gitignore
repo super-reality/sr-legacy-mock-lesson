@@ -2,3 +2,6 @@ build/*
 dist/*
 ProjectsForStudent/*
 ProjectsForTeacher/*
+Setting.py
+test.json
+stack.py
