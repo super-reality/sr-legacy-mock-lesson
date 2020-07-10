@@ -284,7 +284,7 @@ class StudentBodyWidget(MyContainer):
         self.timer.start()
         self.step = 0
         self.anchorDlg = QAnchorDialog(self)
-        self.anchorDlg.setWindowFlags(Qt.WindowStaysOnTopHint)
+        self.anchorDlg.setWindowFlags(Qt.FramelessWindowHint|Qt.WindowStaysOnTopHint|Qt.Dialog)
         #event binding
         self.window().moveEvent = self.processMoveEvent
         # self.initializeObject(path)
@@ -342,6 +342,7 @@ class StudentBodyWidget(MyContainer):
             pass
 
     def processAnchorAnimation(self):
+
         if(self.step>7 or self.step ==0):
             if(self.anchorDlg is not None):
                 logging.info("anchor dialgo is hiding now")
