@@ -49,9 +49,15 @@ class LocalProjectMgr:
         if os.path.exists(self.projectPath):
             shutil.rmtree(self.projectPath)
         
-    def createTemplateProject(treePath):
-        
+    def createTemplateProject(self,treePath=None):
+        if(treePath is None):
+            return
+        path = os.path.join(self.__localPathForTeacher,treePath)
+        if os.path.exists(path):
+            shutil.rmtree(path)
+        os.mkdir(path)
         pass
+
     def createProject(self,projectName=None,title='title',description='description',tags=None,referPixmap=None,anchorPixmap=None):
         
         """
@@ -153,7 +159,7 @@ class LocalProjectMgr:
         self.posHeight = height
         self.posWidth = width
 
-    def createStep(self,stepType=None,title='',description='',sec_description='',uploadPixmap=None,anchorPixmap=None,isChild=False,mouseState=None):
+    def createStep(self,stepType=None,title='',description='',sec_description='',uploadPixmap=None,anchorPixmap=None,isChild=False,mouseState=None,matchText=None):
         
         """
         create step. if success, return true else return error string
@@ -193,6 +199,7 @@ class LocalProjectMgr:
             obj['spotwidth'] = self.posWidth
             obj['spotheight'] = self.posHeight
             obj['anchorPixmap'] = anchorPixmapName
+            obj['matchText'] = matchText
             pass
         elif(stepType == Settings.matchStep):
             obj['type'] = stepType
@@ -228,7 +235,6 @@ class LocalProjectMgr:
         self.json['lessons'].append(obj)
         return True
         
-
     def saveLocalProject(self):
         
         path = os.path.join(self.projectPath,Settings.projectFileName)
@@ -238,6 +244,7 @@ class LocalProjectMgr:
     def downLoadProjectsFromRemote(self):
         DownloadProject(self.__localPathForStudent)
         pass
+
     def getDownLoadPath(self):
         return self.__localPathForStudent
 

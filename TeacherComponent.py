@@ -9,6 +9,8 @@ from Mybutton import *
 from Container import *
 from PyQt5 import QtWidgets
 import os
+import Globals
+import MyUtil
 
 class MyFrame(QtWidgets.QWidget):
 
@@ -521,6 +523,7 @@ class ClickStepItem(MyFrame):
         self.row_snapshot.addWidget(self.bt_pic)
         self.row_snapshot.addWidget(self.bt_video)
         self.row_snapshot.addWidget(self.bt_attach)
+        self.edit_TextMatch = CommonHeaderTextEdit(self)
         
         
         # set properties for each object
@@ -532,9 +535,11 @@ class ClickStepItem(MyFrame):
         self.combo_imageRec.addItem(Settings.textMatchText)
         self.combo_imageRec.setCurrentIndex(0)
         self.checkbt_clickSpot.setChecked(True)
+        self.edit_TextMatch.setPlaceholderText(Settings.textMatchPlaceHolderText)
+        
 
         #set layout
-        self.layout.addWidget(self.lbl_prefix,0,0,23,1)
+        self.layout.addWidget(self.lbl_prefix,0,0,24,1)
         self.layout.addWidget(self.edit_header,0,1,1,19)
         self.layout.addWidget(self.lbl_icon,0,20,1,1)
         self.layout.addWidget(self.edit_description,1,1,1,20)
@@ -547,23 +552,49 @@ class ClickStepItem(MyFrame):
         # self.layout.addWidget(self.bt_att,4,3,1,1)
         self.layout.addWidget(self.row_snapshot,4,1,1,20)
         self.layout.addWidget(self.lbl_uploadImg,5,1,20,20)
+        self.layout.addWidget(self.edit_TextMatch,26,1,1,20)
+
+
+        #set layout properties.
+        self.layout.setContentsMargins(0,0,0,Settings.commonMargin)
+        
 
         #current feedback field seems to be not needed #checkme here
         self.edit_sec_description.hide()
         self.bt_newfolder.hide()
+        self.edit_TextMatch.hide()
 
         #bind event
         self.bt_pic.clicked.connect(self.process_bt_pic_clicked)
         self.anchorDialog.pixmapChanged.connect(self.updatePic)
         self.checkbt_clickSpot.stateChanged.connect(self.process_checkbt_clickSpot)
         self.checkbt_imageRec.stateChanged.connect(self.process_checkbt_imageRec)
+        self.combo_imageRec.currentIndexChanged.connect(self.process_combo_imageRec)
+        
         pass
+    def process_combo_imageRec(self,curIndex):
 
-    def process_checkbt_clickSpot(self,event):
-        if(event):
-            self.anchorDialog.setClickPoint(True)
-            #if anchor diallog is hidden, then don't show child anchor also.
+        if(self.checkbt_imageRec.isChecked() == False):
+            self.checkbt_imageRec.setChecked(True)
+            self.checkbt_clickSpot.setChecked(False)
             
+        if self.combo_imageRec.currentText() == Settings.imageMatchText:
+            self.edit_TextMatch.hide()
+            pass
+        if self.combo_imageRec.currentText() == Settings.textMatchText:
+            self.edit_TextMatch.show()
+            pass
+        pass
+    
+    def process_checkbt_clickSpot(self,event):
+
+        if(event):
+
+            self.checkbt_clickSpot.setChecked(True)
+            self.checkbt_imageRec.setChecked(False)
+            self.anchorDialog.setClickPoint(True)
+            
+            #if anchor diallog is hidden, then don't show child anchor also.
             posx = self.anchorDialog.mapToGlobal(QPoint(0,0)).x() + self.anchorDialog.width()//2
             posy = self.anchorDialog.mapToGlobal(QPoint(0,0)).y() + self.anchorDialog.height()//2
             self.anchorDialog.childAnchor.move(posx-self.anchorDialog.width()//4,posy-self.anchorDialog.height()//4)
@@ -581,11 +612,20 @@ class ClickStepItem(MyFrame):
             self.anchorDialog.setClickPoint(False)
             self.anchorDialog.childAnchor.hide()
             pass
+    
     def process_checkbt_imageRec(self,event):
         if(event):
+            self.checkbt_clickSpot.setChecked(False)
+            if(self.combo_imageRec.currentText() == Settings.textMatchText):
+                self.edit_TextMatch.show()
+            else:
+                self.edit_TextMatch.hide()
+                pass
             pass
         else:
+            self.edit_TextMatch.hide()
             pass
+    
     def process_bt_pic_clicked(self):
         if(self.anchorDialog.isHidden()):
             self.anchorDialog.show()
@@ -594,6 +634,7 @@ class ClickStepItem(MyFrame):
             self.anchorDialog.hide()
         
     def updatePic(self):
+
         pixmap = self.anchorDialog.pixmap()
         self.currentPixmap = pixmap
         
@@ -612,6 +653,13 @@ class ClickStepItem(MyFrame):
             self.lbl_uploadImg.setClickableArea(None,None,None,None)
             pass
         # self.anchorDialog.setPixmap(pixmap)
+        
+
+        # project text match using tesseract
+        if(self.checkbt_imageRec.isChecked() == True and self.combo_imageRec.currentText() == Settings.textMatchText):
+            cv2_image = MyUtil.convertPixmapToGray(pixmap,isgray=False)
+            str_Match = MyUtil.getTextFromImage(cv2_image)
+            self.edit_TextMatch.setText(str_Match)
         self.lbl_uploadImg.setPixmap(pixmap)
         pass
 
@@ -636,10 +684,11 @@ class ClickStepItem(MyFrame):
             self.checkbt_clickSpot.hide()
             self.checkbt_imageRec.hide()
             self.combo_imageRec.hide()
+            self.edit_TextMatch.hide()
             
             # self.edit_sec_description.hide()
         else:
-            self.setWidgetSpan(self.lbl_prefix,23,1)
+            self.setWidgetSpan(self.lbl_prefix,24,1)
             self.edit_description.show()
             self.bt_pic.show()
             self.bt_video.show()
@@ -648,6 +697,7 @@ class ClickStepItem(MyFrame):
             self.checkbt_clickSpot.show()
             self.checkbt_imageRec.show()
             self.combo_imageRec.show()
+            # self.edit_TextMatch.show()
             
             # self.edit_sec_description.show()
     
@@ -663,12 +713,14 @@ class ClickStepItem(MyFrame):
         # self.posx = posx
         # self.posy = posy
         pass
+
     def getDatas(self):
         title = self.edit_header.toPlainText()
         description = self.edit_description.toPlainText()
         anchorPixmap = self.anchorDialog.pixmap()
         sec_description = self.edit_sec_description.toPlainText()
-        return Settings.clickStep,title,description,sec_description,None,anchorPixmap,self.isChild,None
+        match_Text = self.edit_TextMatch.toPlainText()
+        return Settings.clickStep,title,description,sec_description,None,anchorPixmap,self.isChild,None,match_Text
 
 class MatchStepItem(MyFrame):
 
@@ -990,7 +1042,6 @@ class AttachStepItem(MyFrame):
         anchorPixmap = None
         mouseState = None
         return Settings.attachStep,title,description,sec_description,uploadPixmap,anchorPixmap,self.isChild,mouseState
-        
 
 class MyListWidget(QWidget):
     
@@ -1084,6 +1135,8 @@ class MyListWidget(QWidget):
         
 class TeacherLandingPage(MyContainer):
 
+    sig_currentItemChanged = pyqtSignal(str)
+
     def __init__(self,parent):
         super(TeacherLandingPage, self).__init__(parent)
         self.parent = parent
@@ -1124,7 +1177,7 @@ class TeacherLandingPage(MyContainer):
         for path in paths:
             curPath = os.path.join(curPath,path)
 
-        print(curPath)
+        self.sig_currentItemChanged.emit(curPath)
 
 
     def find_item_with_name(self):
@@ -1313,6 +1366,7 @@ class TeacherTabWidget(MyContainer):
     def __init__(self,parent):
         super(TeacherTabWidget,self).__init__(parent)
         self.currentWidget = None
+        self.currentProjectPath = None
         self.__initUI()
 
     def __initUI(self):
@@ -1337,14 +1391,19 @@ class TeacherTabWidget(MyContainer):
         self.landing_page.toolbarsec.sig_Social.connect(self.gotoSocial)
         self.landing_page.toolbarsec.sig_UploadToCloud.connect(self.upLoadProjectToCloud)
         self.landing_page.toolbarsec.sig_PlayResume.connect(self.playLesson)
+        self.landing_page.sig_currentItemChanged.connect(self.currentItemChanged)
 
         self.lookstep_page.firsttoolbar.bt_book.clicked.connect(self.gotoLandingpage)
         self.lookstep_page.procDone.connect(self.gotoStudentTab)
 
+    def currentItemChanged(self,leafPath):
+        self.currentProjectPath = leafPath
+        pass
+
     def editProject(self):
+
         # this is for edit project
         self.gotoLooksteppage(param=Settings.gotoLessson)
-
         pass
     def createNewProject(self):
         name, done1 = QInputDialog.getText(self, 'Input Dialog', 'Enter your project name:')
@@ -1352,8 +1411,11 @@ class TeacherTabWidget(MyContainer):
             row_item = MyTreeItem(str(name),isParent=False)
             self.landing_page.tree.TreeRoot.addChild(row_item)
             self.landing_page.tree.setCurrentItem(row_item)
-            #create project empty structure
-
+            #create project directory and projecty main file
+            projectmgr = Globals.projectmgr
+            if(self.currentProjectPath is not None):
+                projectmgr.createTemplateProject(self.currentProjectPath)
+            # projectmgr.createTemplateProject(,,)
         else:
             pass
         pass

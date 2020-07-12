@@ -12,7 +12,7 @@ from ProjectMgr.LocalMgr import LocalProjectMgr
 from QtWaitingSpinner.pyqtspinner.spinner import WaitingSpinner
 from Thread import UpDownLoadThread
 import logging
-
+import Globals
 
 
 class MyTableWidget(QWidget):
@@ -47,7 +47,7 @@ class MyTableWidget(QWidget):
         self.tab_teacher.gotoStudentTab.connect(self.gotoStudentTab)
 
         #projectmgr setup
-        self.projectmgr = LocalProjectMgr()
+        self.projectmgr = Globals.projectmgr
         self.waitForLoading = WaitingSpinner(self)
         self.threadForUpDown = UpDownLoadThread(self)
 

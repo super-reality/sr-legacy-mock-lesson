@@ -415,6 +415,7 @@ class QAnchorDialog(QLabel):
         self.posyToEmit = None
         self.posWidthToEmit = None
         self.posHeightToEmit = None
+        self.currentPixmap = None
         
         #set object name for style
         self.setObjectName("AnchorDlg")
@@ -489,6 +490,7 @@ class QAnchorDialog(QLabel):
         self.hide()
         pix = getPixmapFromScreen(posx,posy,W,H)
         self.setPixmap(pix)
+        self.currentPixmap = pix
         
         
         #move again to original pos
@@ -768,6 +770,17 @@ class MyDropableLable(QLabel):
         painter.drawRect(QRect(self.posx,self.posy,self.poswidth,self.posheight))
         super().paintEvent(event)
         pass
+
+class MyDropableLableForStudent(MyDropableLable):
+    sig_mousePress = pyqtSignal()
+    def __init__(self,parent):
+        super(MyDropableLableForStudent,self).__init__(parent)
+    def mousePressEvent(self,event):
+        self.sig_mousePress.emit()
+        pass
+    def enterEvent(self,event):
+        self.setCursor(QCursor(Qt.PointingHandCursor))
+        
 
 class MyWebView(MyFrame):
     def __init__(self,parent):

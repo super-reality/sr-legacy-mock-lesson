@@ -9,8 +9,9 @@ from Mybutton import *
 from Container import *
 from ProjectMgr.LocalMgr import LocalProjectMgr
 import os
-from MyUtil import match_image,drawRectToPixmap
+from MyUtil import match_image,drawRectToPixmap,convertPixmapToGray,get_marked_image,convertCV2ImageToPixmap
 import logging
+
 
 class StudentHeaderToolBar(MyFrame):
 
@@ -62,6 +63,7 @@ class StudentHeaderToolBar(MyFrame):
 
 class CommonLessonItem(MyFrame):
     sig_ItemHeaderIcon = pyqtSignal(str,int,int,int,int)
+    sig_check_bt_showTestBoxStateChanged = pyqtSignal(int)
     def __init__(self,parent,isHeader=False):
 
         super(CommonLessonItem,self).__init__(parent)
@@ -72,7 +74,13 @@ class CommonLessonItem(MyFrame):
         if(self.isHeader):
             pass
         else:
-            self.lbl_uploadImg = MyDropableLable(self)
+            self.lbl_uploadImg = MyDropableLableForStudent(self)
+            self.check_bt_showTestBox = MyCheckBox(self)
+            self.check_bt_showTestBox.setChecked(True)
+            self.check_bt_showTestBox.setText(Settings.showTextBox)
+            #bind evnet
+            self.check_bt_showTestBox.stateChanged.connect(self.sig_check_bt_showTestBoxStateChanged)
+
         self.__initUI()
         self.isChild = False
         self.anchorPixmapUrl = None
@@ -80,6 +88,7 @@ class CommonLessonItem(MyFrame):
         self.posy = None
         self.posWidth = None
         self.posHeight = None
+
 
 
     def __initUI(self):
@@ -92,11 +101,14 @@ class CommonLessonItem(MyFrame):
         if(self.isHeader):
             pass
         else:
-            self.layout.addWidget(self.lbl_uploadImg,2,0,20,20)
+            self.layout.addWidget(self.check_bt_showTestBox,2,0,1,20)
+            self.layout.addWidget(self.lbl_uploadImg,3,0,20,20)
+            self.check_bt_showTestBox.hide()
+
             
-        
-        #initialize info
+        #initialize properties and stylesheet
         self.setInfo("Title","Description",None)
+        self.lbl_description.setStyleSheet("border-bottom:2px solid black")
         self.setLayout(self.layout)
 
         #event binding
@@ -173,16 +185,75 @@ class CommonLessonLookStepItem(CommonLessonItem):
         self.lbl_icon.setPixmap(QPixmap('icons/lookstep.png'))    
 
 class CommonLessonClickStepItem(CommonLessonItem):
-    
+    sig_ImageClicked = pyqtSignal()
     def __init__(self,parent):
         super(CommonLessonClickStepItem,self).__init__(parent)
+        #change image component with new one
+
+
         self.isFirstShow = True
+        self.matchText = None
+        self.anchorDiaglog = QAnchorDialog(self)
+        self.isCheckedTestbox = True
         self.__initUI()    
+
+        #bind event
+        self.lbl_uploadImg.sig_mousePress.connect(self.sig_ImageClicked)
+        self.lbl_uploadImg.sig_mousePress.connect(self.processTextMatch)
+        self.sig_check_bt_showTestBoxStateChanged.connect(self.check_bt_showTestBoxChanged)
+        self.anchorDiaglog.pixmapChanged.connect(self.processchangedPixmap)
+
+    def processchangedPixmap(self):
+
+        if(self.anchorDiaglog.currentPixmap is None or self.matchText is None):
+            return
         
-    
+        pixmap = self.anchorDiaglog.currentPixmap
+        cv2_image = convertPixmapToGray(pixmap,isgray=False)
+        img = get_marked_image(self.matchText,cv2_image)
+        pixmap = convertCV2ImageToPixmap(img)
+        if(pixmap is None):
+            return
+        self.anchorDiaglog.setPixmap(pixmap)
+        
+
+    def check_bt_showTestBoxChanged(self,event):
+        
+        if(event):
+            self.isCheckedTestbox = True
+        else:
+            self.isCheckedTestbox = False
+            self.anchorDiaglog.hide()
+                
+        
+        
+    def processTextMatch(self):
+        
+        if(self.isCheckedTestbox == True):
+            self.anchorDiaglog.setClickPoint(False)
+            self.anchorDiaglog.show()
+            
+        else:
+            self.anchorDiaglog.hide()
+            pass
+
+
     def __initUI(self):
+
         self.lbl_icon.setPixmap(QPixmap('icons/clickstep.png'))
 
+    def showEvent(self,event):
+
+        if(self.matchText is not None):
+            self.check_bt_showTestBox.show()
+        else:
+            self.check_bt_showTestBox.hide()
+        super(CommonLessonClickStepItem,self).showEvent(event)
+        pass
+
+    def display(self,isminimized=False):
+
+        super(CommonLessonClickStepItem,self).display(isminimized)
 
 
 class CommonLessonMatchStepItem(CommonLessonItem):
@@ -332,11 +403,15 @@ class StudentBodyWidget(MyContainer):
             self.anchorDlg.resize(H,W)
             self.anchorDlg.move(X,Y)
             self.anchorDlg.hideAllChild()
-            
             self.step = 1
             pass
         else:
             pass
+
+    def processTextMatch(self):
+        #popup window.
+        
+        pass
 
     def processAnchorAnimation(self):
 
@@ -431,6 +506,7 @@ class StudentBodyWidget(MyContainer):
                 item.sig_ItemHeaderIcon.connect(self.processMatchByAnchor)
                 pass
             elif(self.data.lessons[idx].type == Settings.clickStep):
+
                 curInfo = self.data.lessons[idx]
                 item = CommonLessonClickStepItem(self)
                 if(curInfo.anchorPixmap is None):
@@ -439,7 +515,15 @@ class StudentBodyWidget(MyContainer):
                 else:
                     item.anchorPixmapUrl = os.path.join(self.projectPath,curInfo.anchorPixmap)
                 item.setInfo(curInfo.title,curInfo.description,None,anchorUrl=item.anchorPixmapUrl)
+                try:
+                    if(curInfo.matchText is not None and curInfo.matchText != ""):
+                        item.matchText = curInfo.matchText
+                    else:
+                        item.matchText = None
+                except:
+                    pass
                 item.hide()
+
                 self.layout.addWidget(item)
                 self.itemList.append(item)
                 item.installEventFilter(self)
@@ -452,6 +536,8 @@ class StudentBodyWidget(MyContainer):
                 except:
                     pass
                 item.sig_ItemHeaderIcon.connect(self.processMatchByAnchor)
+                item.sig_ImageClicked.connect(self.processTextMatch)
+
                 pass
             elif(self.data.lessons[idx].type == Settings.matchStep):
                 curInfo = self.data.lessons[idx]
@@ -524,6 +610,7 @@ class StudentBodyWidget(MyContainer):
         if(self.itemHeader is not None):
             self.itemHeader.show()
         pass
+
     def hideAllNextAndNestedItems(self,isHide=True):
         
         if(isHide == True and self.nextItem is not None):
@@ -572,13 +659,13 @@ class StudentBodyWidget(MyContainer):
         return super(StudentBodyWidget,self).eventFilter(source,event)
 
     def movePrevItem(self):
-        self.prevItem.setSize(self.prevItem.width(),self.currentItem.height()+2)
+        self.prevItem.setSize(self.prevItem.width(),self.currentItem.lbl_icon.sizeHint().height()+Settings.commonRowHeightChild)
         self.prevItem.show()
         self.prevItem.move(self.currentItem.mapToGlobal(QPoint(0,0))-QPoint(self.prevItem.width(),4))
 
     def moveNextItem(self):
         
-        self.nextArrowWidget.setSize(self.nextArrowWidget.width(),self.currentItem.height()+2)
+        self.nextArrowWidget.setSize(self.nextArrowWidget.width(),self.currentItem.lbl_icon.sizeHint().height()+Settings.commonRowHeightChild)
         self.nextArrowWidget.move(self.currentItem.mapToGlobal(QPoint(0,0)) + QPoint(self.window().width() - self.nextArrowWidget.width()//2,-4))
 
     def play(self,event):
@@ -595,6 +682,7 @@ class StudentBodyWidget(MyContainer):
     
     def hideEvent(self,event):
         self.hideAll()
+
     def hideAll(self):
 
         self.hideAllNextAndNestedItems(False)

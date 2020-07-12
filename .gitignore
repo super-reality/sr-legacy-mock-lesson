@@ -2,6 +2,7 @@ build/*
 dist/*
 ProjectsForStudent/*
 ProjectsForTeacher/*
+Tesseract-OCR/*
 Setting.py
 test.json
 stack.py
