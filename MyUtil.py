@@ -4,7 +4,7 @@ import cv2
 from PyQt5 import QtGui
 from PyQt5.QtGui import QImage
 from PyQt5.QtWidgets import QWidget,QFileDialog
-from PyQt5.QtCore import QRect
+from PyQt5.QtCore import QRect,QPoint
 from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPaintDevice,QPainter,QPen,QColor
 from desktopmagic.screengrab_win32 import (
 getDisplayRects, saveScreenToBmp, saveRectToBmp, getScreenAsImage,
@@ -35,11 +35,14 @@ def getPixmapFromScreen(posx,posy,W,H):
         return pix.copy()
 
 def convertCV2ImageToPixmap(cv2_img=None):
+
     if(cv2_img is None):
         return
+    
     height, width, channel = cv2_img.shape
     bytesPerLine = 3 * width
     qImg = QImage(cv2_img.data, width, height, bytesPerLine, QImage.Format_RGB888)
+    
     return qImg
 
 def isImageUrl(url):
@@ -226,10 +229,12 @@ def find_clr(img):
 
 def get_marked_image(correct,image):
 
+    rects = []
     if correct is None or image is None:
-        return
+        return rects
     #reading the image..
-    img = image
+    img = image.copy()
+    
     #print("Clr: ", find_clr(img))
     '''
     if ( find_clr(img) > 125):
@@ -241,13 +246,19 @@ def get_marked_image(correct,image):
 
     #img = thresh
     '''
+
     (h,w,c) = img.shape
-    string = getTextFromImage(image)
+        
+    
+    # cv2.imwrite("1.png",img)
+    # img = cv2.imread("1.png")
+    image = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    string = pyt.image_to_string(image)
 
-    print("Expected: ",correct)
-    print("Got: ",string)
+    print("Expected string: ",correct)
+    print("Got string: ",string)
 
-    data = pyt.image_to_boxes(Image.fromarray(image))
+    data = pyt.image_to_boxes(image)
 
     #image_to_boxes returns data as a string which can be split using "\n" character.
     data = data.split("\n")
@@ -261,10 +272,11 @@ def get_marked_image(correct,image):
     #print(len(correct),len(data))
 
     '''LOOPING through the characters and maching them, if there is not a match, then draw a rectangle around it..'''
+    
 
     if(len(correct) != len(data)):
         print("Please enter the string of same length.")
-        return
+        return rects
     for i in range(len(correct)):
 
         if (correct[i] != data[i][0]):
@@ -276,18 +288,28 @@ def get_marked_image(correct,image):
             x2 = int(coords[3])
             y2 = h-int(coords[4])
             #print((x1,y2,x2,y2))
-            cv2.rectangle(img,(x1,y1),(x2,y2),(0,0,255),1)
+            rect = QRect(QPoint(x1,x2),QPoint(x2,y2))
+            rects.append(rect)
+            
+            # cv2.rectangle(img,(x1,y1),(x2,y2),(0,0,255),1)
             errors +=1
 
-    return img
+    
+    return rects
 
 
 def getTextFromImage(cv2_img = None):
+
     if(cv2_img is None):
         return
-    string = pyt.image_to_string(Image.fromarray(cv2_img))
+
+    string = pyt.image_to_string(cv2_img)
+
     return string
     
+
+
+
 #basic function to mark an image...
 #get_marked_image(expected_string, path_to_image)
 
@@ -296,5 +318,4 @@ def getTextFromImage(cv2_img = None):
     - Exact same length of strings (expected and received), if not Same, we can ask the user to write the string of same length as expected.
     - Capitalization should be exact too.
     '''
-
 ############################################ End ###############################################

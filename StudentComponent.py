@@ -185,6 +185,7 @@ class CommonLessonLookStepItem(CommonLessonItem):
         self.lbl_icon.setPixmap(QPixmap('icons/lookstep.png'))    
 
 class CommonLessonClickStepItem(CommonLessonItem):
+
     sig_ImageClicked = pyqtSignal()
     def __init__(self,parent):
         super(CommonLessonClickStepItem,self).__init__(parent)
@@ -194,6 +195,7 @@ class CommonLessonClickStepItem(CommonLessonItem):
         self.isFirstShow = True
         self.matchText = None
         self.anchorDiaglog = QAnchorDialog(self)
+        self.anchorDiaglog.isTextMatch = True
         self.isCheckedTestbox = True
         self.__initUI()    
 
@@ -203,18 +205,20 @@ class CommonLessonClickStepItem(CommonLessonItem):
         self.sig_check_bt_showTestBoxStateChanged.connect(self.check_bt_showTestBoxChanged)
         self.anchorDiaglog.pixmapChanged.connect(self.processchangedPixmap)
 
+    def hideEvent(self,event):
+        self.anchorDiaglog.hide()
+        super(CommonLessonClickStepItem,self).hideEvent(event)
+
     def processchangedPixmap(self):
 
         if(self.anchorDiaglog.currentPixmap is None or self.matchText is None):
             return
         
         pixmap = self.anchorDiaglog.currentPixmap
-        cv2_image = convertPixmapToGray(pixmap,isgray=False)
-        img = get_marked_image(self.matchText,cv2_image)
-        pixmap = convertCV2ImageToPixmap(img)
-        if(pixmap is None):
-            return
-        self.anchorDiaglog.setPixmap(pixmap)
+        cv2_image = convertPixmapToGray(pixmap.copy(),isgray=False)
+        rects = get_marked_image(self.matchText,cv2_image)
+        self.anchorDiaglog.rects = rects.copy()
+        self.anchorDiaglog.update()
         
 
     def check_bt_showTestBoxChanged(self,event):

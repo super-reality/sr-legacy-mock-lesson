@@ -38,7 +38,7 @@ def get_marked_image(correct,image):
     #img = thresh
     '''
     (h,w,c) = img.shape
-    string = pyt.image_to_string(Image.open(image))
+    string = pyt.image_to_string(img)
     print("Expected: ",correct)
     print("Got: ",string)
     data = pyt.image_to_boxes(Image.open(image))
@@ -90,4 +90,4 @@ def get_marked_image(correct,image):
     - Exact same length of strings (expected and received), if not Same, we can ask the user to write the string of same length as expected.
     - Capitalization should be exact too.
     '''
-get_marked_image("HELLO MY NAME Is SAADsss.","text_test2.png")
+get_marked_image("HELLO MY NAME Is SAAD.","text_test2.png")

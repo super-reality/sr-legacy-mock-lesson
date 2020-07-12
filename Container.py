@@ -410,6 +410,7 @@ class QAnchorDialog(QLabel):
         #set opacity
         self.ClickPointable = False
         self.isFirstShowing = True
+        self.rects = []
 
         self.posxToEmit = None
         self.posyToEmit = None
@@ -576,20 +577,17 @@ class QAnchorDialog(QLabel):
         self.update()
         pass
     def paintEvent(self,event):
-
         #just keep pixmap but don't show it but background
+        painter = QPainter(self)
+        pen = QPen(QColor(*Settings.childAnchorMarkLineColor))
+        pen.setWidth(Settings.childAnchorMarkLineWidth)
+        painter.setPen(pen)
         if(self.posxToEmit is not None):
-            painter = QPainter(self)
-            pen = QPen(QColor(*Settings.childAnchorMarkLineColor))
-            pen.setWidth(Settings.childAnchorMarkLineWidth)
-            painter.setPen(pen)
             painter.drawRect(self.posxToEmit,self.posyToEmit,self.posWidthToEmit,self.posHeightToEmit)
-        return
-        if(self.ClickPointable):
+
+        for rect in self.rects:
+            painter.drawRect(rect.x(),rect.y(),rect.width(),rect.height())
             pass
-        else:
-            super().paintEvent(event)
-            return
         
         # painter = QPainter(self)
         # painter.setPen(Qt.red)
@@ -600,6 +598,7 @@ class QAnchorDialog(QLabel):
         #     painter.drawEllipse(self.posxToEmit-20,self.posyToEmit-20,40,40)
         # else:
         #     pass
+
 
 class MyRichTextDockWidget(QMainWindow):
     def __init__(self, *args):
