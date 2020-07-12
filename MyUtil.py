@@ -302,7 +302,7 @@ def getTextFromImage(cv2_img = None):
 
     if(cv2_img is None):
         return
-
+    cv2_img = cv2.cvtColor(cv2_img,cv2.COLOR_BGR2GRAY)
     string = pyt.image_to_string(cv2_img)
 
     return string

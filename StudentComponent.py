@@ -104,11 +104,11 @@ class CommonLessonItem(MyFrame):
             self.layout.addWidget(self.check_bt_showTestBox,2,0,1,20)
             self.layout.addWidget(self.lbl_uploadImg,3,0,20,20)
             self.check_bt_showTestBox.hide()
+            self.lbl_description.setStyleSheet("border-bottom:2px solid black")
 
             
         #initialize properties and stylesheet
         self.setInfo("Title","Description",None)
-        self.lbl_description.setStyleSheet("border-bottom:2px solid black")
         self.setLayout(self.layout)
 
         #event binding
