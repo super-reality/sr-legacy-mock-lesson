@@ -18,6 +18,44 @@ import pytesseract as pyt
 from PIL import Image
 from pytesseract import Output
 import os
+import json
+from collections import namedtuple
+
+
+#################### Get project Tree from current Teacher Lessson folder ##########################
+
+def path_to_dict(pathDir,childList=[]):
+    
+    for path in os.listdir(pathDir):
+        absPath = os.path.join(pathDir,path)
+        if os.path.isdir(absPath):
+            if isLeaf(absPath):
+                childList.append(os.path.basename(path))
+                
+            else:
+                obj = {}
+                obj[os.path.basename(path)] = []
+                childList.append(obj)
+                path_to_dict(absPath,obj[os.path.basename(path)])
+            pass
+        else:
+            pass
+    
+def isLeaf(path=None):
+    if(path is None):
+        return False
+    path = os.path.join(path,Settings.projectFileName)
+    if(os.path.exists(path)):
+        return True
+    else:
+        return False
+
+def getDataFromCurrentTeacherFolder():
+    result = []
+    path_to_dict( os.path.join(os.getcwd(),"ProjectsForTeacher") , result )
+    return result
+
+########################################## End ###############################################
 
 def getPixmapFromScreen(posx,posy,W,H):
         """
@@ -66,8 +104,7 @@ def isImageUrl(url):
         return True
     
     return False
-     
-#just a resizing function to resize the template image while checking..
+
 # Resizes a image and maintains aspect ratio
 def maintain_aspect_ratio_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     # Grab the image size and initialize dimensions
@@ -206,7 +243,20 @@ def drawRectToPixmap(self,x,y,w,h,pixmap=None):
     pass
 
 
+####################### convert json file to object #############################
 
+def _json_object_hook(d): return namedtuple('X', d.keys())(*d.values())
+
+def loadData(path=''):
+    
+    try:
+        with open(path) as target:
+            return json.load(target, object_hook=_json_object_hook)
+    except:
+        logging.exception(path +" loading error")
+        return None
+
+################################# End ###########################################
 
 ############################################ Text Match and Tesseract ###################################################
 
@@ -307,8 +357,6 @@ def getTextFromImage(cv2_img = None):
 
     return string
     
-
-
 
 #basic function to mark an image...
 #get_marked_image(expected_string, path_to_image)

@@ -11,6 +11,9 @@ from PyQt5 import QtWidgets
 import os
 import Globals
 import MyUtil
+import shutil
+import logging
+
 
 class MyFrame(QtWidgets.QWidget):
 
@@ -72,6 +75,7 @@ class TextToTreeItem:
 
 
 class MyTree(QTreeWidget):
+
     def __init__(self,parent):
         # remove default arrow icon
         super(MyTree, self).__init__(parent)
@@ -171,10 +175,7 @@ class MyTree(QTreeWidget):
         Load data from api or any other data source and return json object
         """
         # return data for test
-        return ['Drawing Sunsets',{'Pixel Art Track':['How To DRAW A SMILEY FACE']},'Color Theory',{'Art Theroy':{'Drawing Lessions':['Select Palette','acer'],'Drawing Lessions1':['Select Palette','acer']}},\
-            'Drawing Sunsets1',{'Pixel Art Track1':['How To DRAW A SMILEY FACE1']},'Color Theory1',{'Art Theroy1':{'Drawing Lessions1':['Select Palette1','acer1'],'Drawing Lessions':['Select Palette','acer']}},\
-                'Drawing Sunsets2',{'Pixel Art Track':['How To DRAW A SMILEY FACE']},'Color Theory',{'Art Theroy':{'Drawing Lessions':['Select Palette','acer'],'Drawing Lessions1':['Select Palette','acer']}},
-                'Drawing Sunsets3',{'Pixel Art Track':['How To DRAW A SMILEY FACE']},'Color Theory',{'Art Theroy':{'Drawing Lessions':['Select Palette','acer'],'Drawing Lessions1':['Select Palette','acer']}}]
+        return MyUtil.getDataFromCurrentTeacherFolder()
 
     def insertItem(self,label,path,isParent):
 
@@ -184,16 +185,44 @@ class MyTree(QTreeWidget):
         except:
             pass
 
+    def refresh(self):
+        self.clear()
+        #load initial data for treeview
+        self.text_to_titem = TextToTreeItem()
+        self.find_str = ""
+        self.found_titem_list = []
+        self.found_idx = 0
+        self.recurse_jdata(self.loadData(), self.TreeRoot)
+        pass
+    
     def dropEvent(self,event):
+        
         item=self.itemAt(event.pos())
-
+        pathSource = os.path.join(Globals.projectmgr.getTeacherProjectsLocalPath(), self.currentItem().getPath())
+        
         if(item is None):
-            super(MyTree,self).dropEvent(event)
+            try:
+                shutil.move(pathSource,Globals.projectmgr.getTeacherProjectsLocalPath())
+                super(MyTree,self).dropEvent(event)
+                self.refresh()
+            except:
+                event.ignore()
+                pass
             return
         if(item.isParent):
-            super(MyTree,self).dropEvent(event)
+            pathDist = os.path.join(Globals.projectmgr.getTeacherProjectsLocalPath(), item.getPath())
+            try:
+                shutil.move(pathSource,pathDist)
+                super(MyTree,self).dropEvent(event)
+                self.refresh()
+            except:
+                event.ignore()
+                pass
+            
         else:
             event.ignore()
+
+
 
 
 class MyTreeItem(QTreeWidgetItem):
@@ -214,6 +243,16 @@ class MyTreeItem(QTreeWidgetItem):
             font = QFont('Arial',12)
             self.setFont(0,font)
 
+    def getPath(self):
+        item = self
+        paths = []
+        while(item is not None):
+            paths.insert(0,item.text(0))
+            item = item.parent()
+        curPath = ""
+        for path in paths:
+            curPath = os.path.join(curPath,path)
+        return curPath
 
 class TeacherFirstToolbar(MyFrame):
 
@@ -405,78 +444,8 @@ class Teacher_LookStep_SecondToolBar(MyFrame):
             pass
         pass
 
-class LookStepItem(MyFrame):
-
-    def __init__(self,parent):
-
-        super(LookStepItem,self).__init__(parent)
-
-        self.isChild = False
-        self.anchorDialog = QAnchorDialog(self)
-        self.__initUI()
-        self.setStyleSheet('padding:2px')
-        
-    def mousePressEvent(self,event):
-        
-        pass
-
-    def __initUI(self):
-
-        self.layout = MyGridLayout(self)
-        self.edit_header = CommonHeaderTextEdit(self)
-
-        self.lbl_icon = CommonHeaderIcon(self)
-        self.lbl_icon.setPixmap(QPixmap('icons/lookstep.png'))
-        self.edit_description = CommonDescriptionTextEdit(self)
-        self.lbl_prefix = CommonHeaderLabel(self,isPrefix=True)
-        self.edit_header.setPlaceholderText(Settings.stepTitlePlaceHolder)
-        self.edit_description.setPlaceholderText(Settings.stepDescriptionPlaceHolder)
-
-        self.layout.addWidget(self.lbl_prefix,0,0,2,1)
-        self.layout.addWidget(self.edit_header,0,1,1,19)
-        self.layout.addWidget(self.lbl_icon,0,20,1,1)
-        self.layout.addWidget(self.edit_description,1,1,1,20)
-
-        
-    
-    def getDatas(self):
-        title = self.edit_header.toPlainText()
-        description = self.edit_description.toPlainText()
-        anchorPixmap = self.anchorDialog.pixmap()
-        return Settings.lookStep,title,description,None,None,anchorPixmap,self.isChild,None
-
-
-    def display(self,isminum=False):
-        if(self.isChild):
-            self.setContentsMargins(30,0,0,0)
-            isminum = True
-        else:
-            self.setContentsMargins(0,0,0,0)
-        if(isminum == True):
-
-            self.setWidgetSpan(self.lbl_prefix,1,1)
-            self.edit_description.hide()
-
-            pass
-        else:
-
-            self.setWidgetSpan(self.lbl_prefix,2,1)
-            self.edit_description.show()
-            pass
-
-    def setWidgetSpan(self, widget, rowspan=1, colspan=1):
-        index = self.layout.indexOf(widget)
-        row, column = self.layout.getItemPosition(index)[:2]
-        self.layout.addWidget(widget, row, column, rowspan, colspan)
-    # def hideEvent(self,event):
-    #     super().hide()
-    #     self.anchorDialog.hide()
-    def getValidation(self):
-        # self.edit_header.textBackgroundColor
-        
-        pass
-
 class ClickStepItem(MyFrame):
+    
     def __init__(self,parent):
 
         super(ClickStepItem,self).__init__(parent)
@@ -572,6 +541,7 @@ class ClickStepItem(MyFrame):
         self.combo_imageRec.currentIndexChanged.connect(self.process_combo_imageRec)
         
         pass
+    
     def process_combo_imageRec(self,curIndex):
 
         if(self.checkbt_imageRec.isChecked() == False):
@@ -654,7 +624,6 @@ class ClickStepItem(MyFrame):
             pass
         # self.anchorDialog.setPixmap(pixmap)
         
-
         # project text match using tesseract
         if(self.checkbt_imageRec.isChecked() == True and self.combo_imageRec.currentText() == Settings.textMatchText):
             cv2_image = MyUtil.convertPixmapToGray(pixmap,isgray=False)
@@ -667,47 +636,49 @@ class ClickStepItem(MyFrame):
 
         pass
 
-    def display(self,isminum=False):
-        if(self.isChild):
-            self.setContentsMargins(30,0,0,0)
-            isminum = True
-        else:
-            self.setContentsMargins(0,0,0,0)
-        if(isminum == True):
-            self.setWidgetSpan(self.lbl_prefix,1,1)
-            self.show()
-            self.edit_description.hide()
-            self.bt_pic.hide()
-            self.bt_video.hide()
-            self.bt_newfolder.hide()
-            self.lbl_uploadImg.hide()
-            self.checkbt_clickSpot.hide()
-            self.checkbt_imageRec.hide()
-            self.combo_imageRec.hide()
-            self.edit_TextMatch.hide()
-            
-            # self.edit_sec_description.hide()
-        else:
-            self.setWidgetSpan(self.lbl_prefix,24,1)
-            self.edit_description.show()
-            self.bt_pic.show()
-            self.bt_video.show()
-            # self.bt_newfolder.show()
-            self.lbl_uploadImg.show()
-            self.checkbt_clickSpot.show()
-            self.checkbt_imageRec.show()
-            self.combo_imageRec.show()
-            # self.edit_TextMatch.show()
-            
-            # self.edit_sec_description.show()
+    def showEvent(self,event):
+        self.edit_header.show()
+        self.edit_description.show()
+        self.lbl_icon.show()
+        self.lbl_uploadImg.show()
+        self.row_clickspot.show()
+        self.row_imageRec.show()
+        self.row_snapshot.show()
+        print("chekk",self.edit_header.toPlainText())
+        print("chekk1",self.edit_TextMatch.toPlainText())
+        if len(self.edit_TextMatch.toPlainText())>0:
+            self.edit_TextMatch.show()
+            self.checkbt_clickSpot.setChecked(False)
+            self.checkbt_imageRec.setChecked(True)
+            self.combo_imageRec.setCurrentText(Settings.textMatchText)
+        if self.posx is None:
+            self.checkbt_clickSpot.setChecked(False)
+            self.checkbt_imageRec.setChecked(True)
+        pass
+
+        super().showEvent(event)
+
+    def hideEvent(self,event):
+        self.edit_header.hide()
+        self.lbl_icon.hide()
+        self.edit_description.hide()
+        self.lbl_prefix.hide()
+        self.bt_pic.hide()
+        self.bt_video.hide()
+        self.bt_newfolder.hide()
+        self.bt_attach.hide()
+        self.lbl_uploadImg.hide()
+        self.row_clickspot.hide()
+        self.row_imageRec.hide()
+        self.row_snapshot.hide()
+        self.edit_TextMatch.hide()
+        super(ClickStepItem,self).hideEvent(event)
     
     def setWidgetSpan(self, widget, rowspan=1, colspan=1):
         index = self.layout.indexOf(widget)
         row, column = self.layout.getItemPosition(index)[:2]
         self.layout.addWidget(widget, row, column, rowspan, colspan)
-    # def hideEvent(self,event):
-    #     super().hide()
-    #     self.anchorDialog.hide()
+    
     def sig_mouseClick(self,posx,posy):
         #checkmehere don't need to show crosshair to mouse click point
         # self.posx = posx
@@ -722,327 +693,24 @@ class ClickStepItem(MyFrame):
         match_Text = self.edit_TextMatch.toPlainText()
         return Settings.clickStep,title,description,sec_description,None,anchorPixmap,self.isChild,None,match_Text
 
-class MatchStepItem(MyFrame):
-
-    def __init__(self,parent):
-
-        super(MatchStepItem,self).__init__(parent)
-        self.isChild = False
-        self.anchorDialog = QAnchorDialog(self)
-        self.__initUI()
-        self.lbl_uploadImg.setStyleSheet('margin-bottom:10px;border:1px solid black')
+    def setItemInfos(self,title,description,sec_description,isChild,spotposx,spotposy,spotwidth,spotheight,anchorPixmap,*kwargs):
         
-
-    def __initUI(self):
-        
-        self.layout = MyGridLayout(self)
-        self.edit_header = CommonHeaderTextEdit(self)
-        self.lbl_icon = CommonHeaderIcon(self)
-        self.lbl_icon.setPixmap(QPixmap('icons/matchstep.png'))
-        self.edit_description = CommonDescriptionTextEdit(self)
-        self.lbl_prefix = CommonHeaderLabel(self,isPrefix=True)
-        # self.lbl_prefix.setPixmap(QPixmap('icons/stack-step-big.png'))
-        self.edit_header.setPlaceholderText(Settings.stepTitlePlaceHolder)
-        self.edit_description.setPlaceholderText(Settings.stepDescriptionPlaceHolder)
-        
-
-        self.bt_pic = PictureButton(self)
-        self.bt_video = VideoButton(self)
-        self.bt_newfolder = NewFolderButton(self)
-        self.lbl_uploadImg = MyDropableLable(self)
-        self.checkbt_showscrolll = QCheckBox(self)
-        self.bt_upscroll = QPushButton(self)
-        self.bt_downscroll = QPushButton(self)
-        
-
-        self.bt_upscroll.setMinimumHeight(20)
-        self.bt_downscroll.setMinimumHeight(20)
-        self.bt_upscroll.setIcon(QIcon('icons/uparrow.png'))
-        self.bt_downscroll.setIcon(QIcon('icons/downarrow.png'))
-        self.checkbt_showscrolll.setText('Show Scroll iocns')
-
-        #set fixed height for some widget
-
-
-        
-        self.layout.addWidget(self.lbl_prefix,0,0,23,1)
-        self.layout.addWidget(self.edit_header,0,1,1,19)
-        self.layout.addWidget(self.lbl_icon,0,20,1,1)
-        self.layout.addWidget(self.edit_description,1,1,1,20)
-        
-        self.layout.addWidget(self.bt_pic,2,1,1,1)
-        self.layout.addWidget(self.bt_video,2,2,1,1)
-        self.layout.addWidget(self.bt_newfolder,2,3,1,1)
-        self.layout.addWidget(self.lbl_uploadImg,3,1,20,20)
-        
-
-        #this seems to be useless at the moment.
-        self.checkbt_showscrolll.hide()
-        self.bt_upscroll.hide()
-        self.bt_downscroll.hide()
-
-        #bind events
-        self.anchorDialog.pixmapChanged.connect(self.updatePic)
-        self.bt_pic.clicked.connect(self.process_bt_pic_clicked)
-        # self.edit_header.focusOutEvent = self.processFocusout
-
-        pass
-
-    def processFocusout(self,event):
-        
-        self.anchorDialog.hide()
-
-    def process_bt_pic_clicked(self):
-        if(self.anchorDialog.isHidden()):
-            self.anchorDialog.show()
-        else:
-            self.anchorDialog.getPixmapAtCurrentPosition()
-            self.anchorDialog.hide()
-        
-    def updatePic(self):
-        pixmap = self.anchorDialog.pixmap()
-        self.lbl_uploadImg.setPixmap(pixmap)
-        
-        pass
-
-    def getDatas(self):
-
-        title = self.edit_header.toPlainText()
-        description = self.edit_description.toPlainText()
-        sec_description =""
-        uploadPixmap = self.lbl_uploadImg.pixmap()
-        anchorPixmap = self.anchorDialog.pixmap()
-        
-        return Settings.matchStep,title,description,sec_description,uploadPixmap,anchorPixmap,self.isChild,None
-  
-    def display(self,isminum = False):
-        if(self.isChild):
-            self.setContentsMargins(30,0,0,0)
-            isminum = True
-        else:
-            self.setContentsMargins(0,0,0,0)
-        if(isminum == True):
-            #set prefix label height to header label
-            self.setWidgetSpan(self.lbl_prefix,1,1)
-            self.setWidgetSpan(self.lbl_uploadImg,0,0)
-            self.layout.setRowStretch(2,0)
-            self.edit_description.hide()
+        self.edit_header.setText(title)
+        self.edit_description.setText(description)
+        self.edit_sec_description.setText(sec_description)
+        if(kwargs is not None):
+            self.edit_TextMatch.setText(kwargs[0])
             
-            self.bt_pic.hide()
-            self.bt_video.hide()
-            self.bt_newfolder.hide()
-            self.lbl_uploadImg.hide()
-            
-        else:
-
-            self.setWidgetSpan(self.lbl_prefix,23,1)
-            self.setWidgetSpan(self.lbl_uploadImg,20,20)
-            self.layout.setRowStretch(2,1)
-
-            self.edit_description.show()
-            self.bt_pic.show()
-            self.bt_video.show()
-            self.bt_newfolder.show()
-            self.lbl_uploadImg.show()
+        self.isChild = isChild
+        self.posx = spotposx
+        self.posy = spotposy
+        self.posWidth = spotwidth
+        self.posHeight = spotheight
+        if(anchorPixmap is not None):
+            path = os.path.join(Globals.projectmgr.projectPath,anchorPixmap)
+            self.lbl_uploadImg.setPixmap(QPixmap(path))
+        pass
     
-    def setWidgetSpan(self, widget, rowspan=1, colspan=1):
-
-        index = self.layout.indexOf(widget)
-        row, column = self.layout.getItemPosition(index)[:2]
-        self.layout.addWidget(widget, row, column, rowspan, colspan)
-
-class MouseStepItem(MyFrame):
-
-    def __init__(self,parent):
-
-        super(MouseStepItem,self).__init__(parent)
-
-        self.isChild = False
-        self.upScroll = None
-        self.anchorDialog = QAnchorDialog(self)
-        self.__initUI()
-        self.setStyleSheet('padding:2px')
-
-
-    def __initUI(self):
-        
-        self.layout = MyGridLayout(self)
-        self.edit_header = CommonHeaderTextEdit(self)
-        self.lbl_icon = CommonHeaderIcon(self)
-        self.lbl_icon.setPixmap(QPixmap('icons/mousestep.png'))
-        self.edit_description = CommonDescriptionTextEdit(self)
-        self.edit_header.setPlaceholderText(Settings.stepTitlePlaceHolder)
-        self.edit_description.setPlaceholderText(Settings.stepDescriptionPlaceHolder)
-        self.lbl_prefix = CommonHeaderLabel(self,isPrefix=True)
-        # self.lbl_prefix.setPixmap(QPixmap('icons/stack-step-big.png'))
-        self.optionRight = QRadioButton("Right Click")
-        self.optionScroll = QRadioButton("Scroll")
-        self.lbl_uploadImg = MyDropableLable(self)
-
-        self.bt_pic = PictureButton(self)
-        self.bt_upscroll = QPushButton(self)
-        self.bt_downscroll = QPushButton(self)
-
-        # self.bt_upscroll.setFixedSize(20,20)
-        # self.bt_downscroll.setFixedSize(20,20)
-        self.bt_upscroll.setIcon(QIcon('icons/uparrow.png'))
-        self.bt_downscroll.setIcon(QIcon('icons/downarrow.png'))
-        
-        self.layout.addWidget(self.lbl_prefix,0,0,19,1)
-        self.layout.addWidget(self.edit_header,0,1,2,18)
-        self.layout.addWidget(self.lbl_icon,0,19,2,1)
-        self.layout.addWidget(self.edit_description,2,1,2,19)
-        self.layout.addWidget(self.optionRight,4,1,2,3)
-        self.layout.addWidget(self.optionScroll,6,1,2,3)
-        self.layout.addWidget(self.bt_upscroll,6,5,2,1)
-        self.layout.addWidget(self.bt_downscroll,6,6,2,1)
-        self.layout.addWidget(self.lbl_uploadImg,8,1,10,10)
-        self.layout.addWidget(self.bt_pic,8,1,1,1)
-       
-        #init UI
-        self.bt_upscroll.setEnabled(False)
-        self.bt_downscroll.setEnabled(False)
-        #bind event
-
-        self.bt_upscroll.clicked.connect(self.processButton)
-        self.bt_downscroll.clicked.connect(self.processButton)
-        self.optionScroll.clicked.connect(self.processOption)
-
-        pass
-
-    def processOption(self):
-        
-        if(self.optionScroll.isChecked()):
-            self.bt_upscroll.setEnabled(True)
-            self.upScroll = True
-            self.bt_upscroll.show()
-            self.bt_downscroll.setEnabled(False)
-            self.bt_downscroll.show()
-        else:
-            pass
-        pass
-
-    def processButton(self):
-        
-        if(self.bt_upscroll.isEnabled()):
-            self.bt_upscroll.setEnabled(False)
-            self.bt_downscroll.setEnabled(True)
-            pass
-        else:
-            self.bt_upscroll.setEnabled(True)
-            self.bt_downscroll.setEnabled(False)
-        
-        if(self.bt_upscroll.isEnabled()):
-            self.upScroll = True
-        else:
-            self.upScroll = False
-        print(self.upScroll)
-        pass
-
-    def display(self, isminum = False):
-
-        if(self.isChild == True):
-            self.setContentsMargins(30,0,0,0)
-            isminum = True
-        else:
-            self.setContentsMargins(0,0,0,0)
-        
-        if(isminum == True):
-
-            self.setWidgetSpan(self.lbl_prefix,2,1)
-            self.setWidgetSpan(self.lbl_uploadImg,0,0)
-            self.setWidgetSpan(self.bt_pic,0,0)
-            self.setWidgetSpan(self.edit_description,0,0)
-            self.setWidgetSpan(self.optionRight,0,0)
-            self.setWidgetSpan(self.optionScroll,0,0)
-            self.setWidgetSpan(self.bt_upscroll,0,0)
-            self.setWidgetSpan(self.bt_downscroll,0,0)
-
-            self.edit_description.hide()
-            self.optionRight.hide()
-            self.optionScroll.hide()
-            self.bt_upscroll.hide()
-            self.bt_downscroll.hide()
-            self.lbl_uploadImg.hide()
-            self.bt_pic.hide()
-
-        else:
-
-            self.setWidgetSpan(self.lbl_prefix,19,1)
-            self.setWidgetSpan(self.lbl_uploadImg,10,10)
-            # self.lbl_prefix.setMaximumHeight(300)
-            self.setWidgetSpan(self.bt_pic,1,1)
-            self.setWidgetSpan(self.edit_description,2,19)
-            self.setWidgetSpan(self.optionRight,2,3)
-            self.setWidgetSpan(self.optionScroll,2,3)
-            self.setWidgetSpan(self.bt_upscroll,2,1)
-            self.setWidgetSpan(self.bt_downscroll,2,1)
-
-            self.edit_description.show()
-            self.optionRight.show()
-            self.optionScroll.show()
-            self.bt_upscroll.show()
-            self.bt_downscroll.show()
-            self.lbl_uploadImg.show()
-            self.bt_pic.show()
-
-        pass
-
-    def setWidgetSpan(self, widget, rowspan=1, colspan=1):
-        index = self.layout.indexOf(widget)
-        row, column = self.layout.getItemPosition(index)[:2]
-        self.layout.addWidget(widget, row, column, rowspan, colspan)
-
-    # def hideEvent(self,event):
-    #     super().hide()
-    #     self.anchorDialog.hide()
-
-    def getValidation(self):
-        pass
-    def getDatas(self):
-        title = self.edit_header.toPlainText()
-        description = self.edit_description.toPlainText()
-        sec_description = None
-        uploadPixmap = self.lbl_uploadImg.pixmap()
-        anchorPixmap = self.anchorDialog.pixmap()
-        isRightClick = self.optionRight.isChecked()
-        mouseState = None
-        if(isRightClick == True):
-            mouseState = Settings.rightClick
-        elif(self.upScroll == True):
-            mouseState = Settings.scrollUp
-        elif(self.upScroll == False):
-            mouseState = Settings.scrollDown
-        else:
-            mouseState = Settings.leftClick
-        return Settings.mouseStep,title,description,sec_description,uploadPixmap,anchorPixmap,self.isChild,mouseState
-
-class AttachStepItem(MyFrame):
-
-    def __init__(self,parent):
-
-        super(AttachStepItem,self).__init__(parent)
-        self.isChild = False
-        self.__initUI()
-        self.setStyleSheet('padding:2px')
-
-    def __initUI(self):
-        
-        pass
-
-    # def hideEvent(self,event):
-    #     super().hide()
-    #     self.anchorDialog.hide()
-
-    def getValidation(self):
-        title = None
-        description = None
-        sec_description = None
-        uploadPixmap = None
-        anchorPixmap = None
-        mouseState = None
-        return Settings.attachStep,title,description,sec_description,uploadPixmap,anchorPixmap,self.isChild,mouseState
-
 class MyListWidget(QWidget):
     
     def __init__(self,parent):
@@ -1075,10 +743,8 @@ class MyListWidget(QWidget):
         self.currentItem = self.listitems[0]
         for item in self.listitems:
             self.vbox.addWidget(item)
-        self.showAllItems()
     
     def insertItem(self,item):
-
         if(item is None):
             self.showAllItems()
             return
@@ -1089,16 +755,17 @@ class MyListWidget(QWidget):
         # self.currentItem.lbl_prefix.installEventFilter(self) #check me here no need add child item
         self.showAllItems()
 
-    def showAllItems(self):
+    def isEmpty(self):
+        return len(self.listitems) == 0
 
+    def showAllItems(self):
         for item in self.listitems:
             if(item == self.currentItem):
-                item.display(isminum=False)
+                item.show()
                 item.anchorDialog.show()
                 pass
             else:
-                # item.display(isminum=True)
-                # item.display(isminum=False)#checkmehere
+                item.show()
                 item.anchorDialog.hide()
 
     def eventFilter(self,source,event):
@@ -1169,6 +836,7 @@ class TeacherLandingPage(MyContainer):
         return vbox
 
     def currentItemChanged(self,item):
+
         paths = []
         while(item is not None):
             paths.insert(0,item.text(0))
@@ -1178,7 +846,6 @@ class TeacherLandingPage(MyContainer):
             curPath = os.path.join(curPath,path)
 
         self.sig_currentItemChanged.emit(curPath)
-
 
     def find_item_with_name(self):
 
@@ -1190,6 +857,9 @@ class TeacherNewLessionPage(MyContainer):
 
         super(TeacherNewLessionPage,self).__init__(parent)
         self.__initUI()
+
+        self.currentProjectPath = Globals.projectmgr.projectPath
+        self.data = None
 
     def __initUI(self):
         self.layout = MyGridLayout(self)
@@ -1232,32 +902,34 @@ class TeacherNewLessionPage(MyContainer):
 
     def processTitleChanged(self,str_title):
         pass
+
+    def addItemInstance(self,item=None):
+        logging.info("this item has been added from folder "+item.edit_header.toPlainText())
+        if(item is None):
+            return
+        self.newLessonbar.listWidget.insertItem(item)
+        pass
     
     def addItem(self,itemtype):
-        
         if(itemtype == 'attach'):
             self.newLessonbar.listWidget.insertItem(None)
             pass
         elif(itemtype == 'click'):
             if(self.newLessonbar.isHidden()):
-                if(len(self.newLessonbar.listWidget.listitems) == 0):
+                if(self.newLessonbar.listWidget.isEmpty()):
+                    logging.info("empty item has been added")
+                    self.newLessonbar.listWidget.insertItem(ClickStepItem(self))
                     pass
                 else:
+                    logging.info("No item has been added but go to step page")
                     self.gotoStepPage()
                     return
-            self.newLessonbar.listWidget.insertItem(ClickStepItem(self))
+            else:
+                self.newLessonbar.listWidget.insertItem(ClickStepItem(self))
+                pass            
             pass
         elif(itemtype == 'cloud'):
             self.newLessonbar.listWidget.insertItem(None)
-            pass
-        elif(itemtype == 'look'):
-            self.newLessonbar.listWidget.insertItem(LookStepItem(self))
-            pass
-        elif(itemtype == 'match'):
-            self.newLessonbar.listWidget.insertItem(MatchStepItem(self))
-            pass
-        elif(itemtype == 'mouse'):
-            self.newLessonbar.listWidget.insertItem(MouseStepItem(self))
             pass
         elif(itemtype == 'play'):
             self.procDone.emit("start")
@@ -1292,12 +964,72 @@ class TeacherNewLessionPage(MyContainer):
     
     def gotoNewLessonPage(self,event):
         
+        if(self.currentProjectPath != Globals.projectmgr.projectPath and Globals.projectmgr.projectPath is not None):
+            if self.LoadCurrentProject():
+                #emit signal
+                pass
+            else:
+                return
+        if(MyUtil.isLeaf(self.currentProjectPath) == False):
+            return
+        
+
         self.newLessonbar.hide()
         self.Secondtoolbar.show()
         
         #hide lessonwidget and anchordialgo
         if(self.newLessonbar.listWidget.currentItem is not None):
             self.newLessonbar.listWidget.currentItem.anchorDialog.hide()
+
+                    
+
+    def LoadCurrentProject(self):
+
+        self.currentProjectPath = Globals.projectmgr.projectPath
+        logging.info("project is located in " + self.currentProjectPath)
+
+        if(MyUtil.isLeaf(self.currentProjectPath)):
+            pass
+
+        else:
+            logging.info("Current item is not project folder.")
+            return False
+
+        self.data = MyUtil.loadData(os.path.join(self.currentProjectPath,Settings.projectFileName))
+        
+        if(self.data is None):
+            logging.info("Data is not found in here " + self.currentProjectPath)
+            return False
+
+        self.imageBaseUrl = self.data.metaInfo.baseImgUrl
+        self.Secondtoolbar.edit_lesson_title.setText(self.data.header.title)
+        self.Secondtoolbar.edit_lesson_descripiton.setText(self.data.header.description)
+        self.Secondtoolbar.edit_lesson_tag.setText(self.data.header.tags)
+        
+
+        if(self.data.header.anchorImageName is not None):
+            self.Secondtoolbar.lbl_picture.setPixmap(QPixmap(os.path.join(Globals.projectmgr.projectPath,self.data.header.anchorImageName)))
+        
+        self.itemList = []
+        logging.info("list items has been cleared")
+        self.newLessonbar.listWidget.listitems.clear()
+        for idx in range(len(self.data.lessons)):
+            if(self.data.lessons[idx].type == Settings.lookStep):
+                pass
+            elif(self.data.lessons[idx].type == Settings.clickStep):
+
+                curInfo = self.data.lessons[idx]
+                item = ClickStepItem(self)
+                item.setItemInfos(curInfo.title,curInfo.description,curInfo.sec_description,curInfo.isChild,curInfo.spotposx,curInfo.spotposy,curInfo.spotwidth,curInfo.spotheight,\
+                    curInfo.anchorPixmap,curInfo.matchText)
+                self.addItemInstance(item)
+                item.hide()
+                pass
+            
+            else:
+                pass
+        
+        return True
     
     def gotoStepPage(self):
         
@@ -1352,6 +1084,9 @@ class TeahcerNewLookStepPage(MyContainer):
         # for future use
         pass
     
+    def showEvent(self,event):
+        self.listWidget.showAllItems()
+
     def setText(self,str_text):
         self.lbl_lessonTitle.setText(str_text)
         pass
@@ -1363,6 +1098,7 @@ class TeahcerNewLookStepPage(MyContainer):
 
 class TeacherTabWidget(MyContainer):
     gotoStudentTab = pyqtSignal(str)
+    sig_saveCurrentProject = pyqtSignal(str)
     def __init__(self,parent):
         super(TeacherTabWidget,self).__init__(parent)
         self.currentWidget = None
@@ -1397,31 +1133,40 @@ class TeacherTabWidget(MyContainer):
         self.lookstep_page.procDone.connect(self.gotoStudentTab)
 
     def currentItemChanged(self,leafPath):
-        self.currentProjectPath = leafPath
-        pass
+        Globals.projectmgr.currentProjectPath = leafPath
+        Globals.projectmgr.changeProjectPath()
+        
 
     def editProject(self):
-
         # this is for edit project
         self.gotoLooksteppage(param=Settings.gotoLessson)
         pass
     def createNewProject(self):
         name, done1 = QInputDialog.getText(self, 'Input Dialog', 'Enter your project name:')
         if(done1):
-            row_item = MyTreeItem(str(name),isParent=False)
-            self.landing_page.tree.TreeRoot.addChild(row_item)
-            self.landing_page.tree.setCurrentItem(row_item)
-            #create project directory and projecty main file
-            projectmgr = Globals.projectmgr
-            if(self.currentProjectPath is not None):
-                projectmgr.createTemplateProject(self.currentProjectPath)
-            # projectmgr.createTemplateProject(,,)
+            path = None
+            if(MyUtil.isLeaf(Globals.projectmgr.getAbsCurrentProjectPath())):
+                path = os.path.dirname(Globals.projectmgr.getAbsCurrentProjectPath())
+            else:
+                path = Globals.projectmgr.getAbsCurrentProjectPath()
+            try:
+
+                path = os.path.join(path,name)
+                Globals.projectmgr.createTemplateProject(path)
+                Globals.projectmgr.projectPath = path
+
+                #create project directory and projecty main file
+                self.gotoLooksteppage()
+            except:
+                pass
         else:
             pass
         pass
-    
+  
 
     def deleteProject(self):
+        Globals.projectmgr.deleteCurrentProject()
+        self.landing_page.tree.refresh()
         pass
 
     def searchProject(self):
@@ -1453,7 +1198,7 @@ class TeacherTabWidget(MyContainer):
 
 
     def showConfirmDlg(self):
-        if(CustomDialog.showStandardMsgbox(self.window(),"Will you exit creation of project?")):
+        if(CustomDialog.showStandardMsgbox(self.window(),"Will you save This project?")):
             return True
         else:
             return False
@@ -1462,10 +1207,14 @@ class TeacherTabWidget(MyContainer):
     def gotoLandingpage(self):
         
         if self.showConfirmDlg():
-            self.currentWidget = self.landing_page
-            self.hideAllButCurrent()
+            #save current project
+            self.sig_saveCurrentProject.emit("")
+            pass
         else:
             pass
+        self.currentWidget = self.landing_page
+        self.hideAllButCurrent()
+        self.landing_page.tree.refresh()
 
     # def hideEvent(self,event):
     #     self.gotoLandingpage()

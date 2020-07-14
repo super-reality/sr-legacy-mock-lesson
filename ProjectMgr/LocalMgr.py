@@ -10,9 +10,11 @@ sys.path.append("..")
 from Setting import Settings
 import shutil
 from ProjectMgr.UpDownloadProject import DownloadProject,UploadProject
+import MyUtil
+import logging
 # define the name of the directory to be created
 
-class LocalProjectMgr:
+class LocalProjectMgrVersion1:
     
     def __init__(self):
         #create project local directory if not exist.
@@ -25,11 +27,25 @@ class LocalProjectMgr:
         self.posHeight = None
         self.projectPath = None
         self.curStep = None
-        self.currentProjectName = None
+        self.currentProjectPath = None
         self.json = None
 
         self.__createDir()
 
+    def changeProjectPath(self):
+        self.projectPath = os.path.join(self.__localPathForTeacher,self.currentProjectPath)
+        pass
+
+    def getAbsCurrentProjectPath(self):
+        if(self.currentProjectPath is None):
+            return self.__localPathForTeacher
+        path = os.path.join(self.__localPathForTeacher,self.currentProjectPath)
+        return path
+        
+    def getStudentProjectsLocalPath(self):
+        return self.__localPathForStudent
+    def getTeacherProjectsLocalPath(self):
+        return self.__localPathForTeacher
     def __createDir(self):
 
         if not os.path.exists(self.__localPathForTeacher):
@@ -45,17 +61,20 @@ class LocalProjectMgr:
             print("Directory " , self.__localPathForStudent ,  " already exists")
 
     def deleteCurrentProject(self):
-        
         if os.path.exists(self.projectPath):
             shutil.rmtree(self.projectPath)
         
     def createTemplateProject(self,treePath=None):
         if(treePath is None):
             return
-        path = os.path.join(self.__localPathForTeacher,treePath)
-        if os.path.exists(path):
-            shutil.rmtree(path)
-        os.mkdir(path)
+        if os.path.exists(treePath):
+            shutil.rmtree(treePath)
+        os.mkdir(treePath)
+        filePath = os.path.join(treePath,Settings.projectFileName)
+        templateData = {"metaInfo": {"baseImgUrl": ""}, "header": {"title": "title", "description": "", "imageName": None, "tags": "lesson", "anchorImageName": None}, "lessons": []}
+        with open(filePath,mode='a') as outfile:
+            json.dump(templateData,outfile)
+            pass
         pass
 
     def createProject(self,projectName=None,title='title',description='description',tags=None,referPixmap=None,anchorPixmap=None):
@@ -65,11 +84,9 @@ class LocalProjectMgr:
         if it is successfully created, then return True, else return error text
         """
         
-        self.currentProjectName = projectName
-
-        if(projectName is not None):
-            self.projectPath = os.path.join(self.__localPathForTeacher,str(projectName))
-        else:
+        
+        if(self.projectPath is None):
+            logging.info("project Path is not defined")
             return Settings.projectNameNotSpecified
         
         if not os.path.exists(self.projectPath):
@@ -260,3 +277,12 @@ class LocalProjectMgr:
         listPath = os.listdir(localpath)
         return listPath
         
+
+class LocalProjectMgr(LocalProjectMgrVersion1):
+    def __init__(self):
+        super(LocalProjectMgr,self).__init__()
+
+    def createProject(self,projectName=None,title='title',description='description',tags=None,referPixmap=None,anchorPixmap=None):
+        result = super(LocalProjectMgr,self).createProject(projectName=projectName,title=title,description=description,tags=tags,referPixmap=referPixmap,anchorPixmap=anchorPixmap)
+        return result
+

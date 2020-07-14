@@ -4,12 +4,12 @@ QAction, QTabWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QFrame,QLabel,QSlider,QS
     QListWidget)
 from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPaintDevice,QPainter,QPen
 from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent,QTimer
-from Setting import Settings,loadData
+from Setting import Settings
 from Mybutton import *
 from Container import *
 from ProjectMgr.LocalMgr import LocalProjectMgr
 import os
-from MyUtil import match_image,drawRectToPixmap,convertPixmapToGray,get_marked_image,convertCV2ImageToPixmap
+from MyUtil import match_image,drawRectToPixmap,convertPixmapToGray,get_marked_image,convertCV2ImageToPixmap,loadData
 import logging
 
 
@@ -421,7 +421,6 @@ class StudentBodyWidget(MyContainer):
 
         if(self.step>7 or self.step ==0):
             if(self.anchorDlg is not None):
-                logging.info("anchor dialgo is hiding now")
                 if(self.step<9):
                     self.anchorDlg.hide()
             return
@@ -469,6 +468,7 @@ class StudentBodyWidget(MyContainer):
     def loadData(self,projectfilePath):
 
         self.data = loadData(projectfilePath)
+                
 
     def __initUI(self):
         
@@ -811,7 +811,6 @@ class StudentProjectList(MyContainer):
     sig_CurrentProjectChanged = pyqtSignal(str)
     def __init__(self,parent):
         super(StudentProjectList,self).__init__(parent)
-        self.currentProjectName = None
         self.__initUI()
         pass               
     def __initUI(self):

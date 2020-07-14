@@ -145,7 +145,7 @@ class CommonHeaderTextEdit(QTextEdit):
 
     def processTextChanged(self):
         size = self.document().size().toSize()
-        self.setFixedHeight(size.height()+3)
+        self.setFixedHeight(max(Settings.commonRowHeightChild,size.height()+3))
 
 class CommonFramelessWidget(QFrame):
     def __init__(self,parent):
@@ -627,6 +627,8 @@ class MyRichTextDockWidget(QMainWindow):
             self.wordprocessor.hideAllButTextEdit(False)
     def getText(self):
         return self.wordprocessor.editor.toPlainText()
+    def setText(self, str_In = ""):
+        self.wordprocessor.editor.setText(str_In)
 
 class MyDock(QDockWidget):
     def __init__(self,parent = None):

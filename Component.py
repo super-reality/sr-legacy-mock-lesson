@@ -55,6 +55,7 @@ class MyTableWidget(QWidget):
         self.tab_student.sig_bt_signal.connect(self.sig_bt_signal)
         self.tab_student.sig_bt_carmin.connect(self.sig_bt_carmin)
         self.sig_startUpDown.connect(self.startUpDown)
+        self.tab_teacher.sig_saveCurrentProject.connect(self.saveProjectToLocal)
     
     def startUpDown(self,state = -1):
         if(state == 0):
@@ -71,7 +72,7 @@ class MyTableWidget(QWidget):
     def sig_bt_signal(self):
         if(self.threadForUpDown.isAlive() == False):
             self.threadForUpDown = UpDownLoadThread(self)
-            self.threadForUpDown.currentProjectName = self.projectmgr.currentProjectName
+            self.threadForUpDown.currentProjectName = os.path.basename(Globals.projectmgr.projectPath)
             self.threadForUpDown.isUpLoad = False
             self.threadForUpDown.start()
         pass
@@ -87,7 +88,7 @@ class MyTableWidget(QWidget):
                 """
                 #goto student tab to test.
                 self.waitForLoading.start()
-                if self.saveProjectToLocal() == False:
+                if self.saveProjectToLocal(isUpload=True) == False:
                     pass
                 else:
                     self.tabs.setCurrentWidget(self.tab_student)
@@ -98,7 +99,7 @@ class MyTableWidget(QWidget):
         else:
             pass
 
-    def saveProjectToLocal(self):
+    def saveProjectToLocal(self,isUpload=False):
 
         #first Create Project
         projectName = self.tab_teacher.lookstep_page.Secondtoolbar.edit_lesson_title.text()
@@ -111,16 +112,13 @@ class MyTableWidget(QWidget):
             pass
         else:
             pixmapRefer = None
-            pixmapAnchor = None        
-        
+            pixmapAnchor = None
         try:
             resp = self.projectmgr.createProject(projectName,title,description,tags,pixmapRefer,pixmapAnchor)
             if(resp == Settings.projectAlreadyExist):
                 dlg_resp = CustomDialog.showStandardMsgbox(self.window(),"Project Folder Already Exist, Will you replace it with new one?")
                 if(dlg_resp):
-                    
                     self.projectmgr.deleteCurrentProject()
-                    
                     self.projectmgr.createProject(projectName,title,description,tags,pixmapRefer,pixmapAnchor)
                 else:
                     return False
@@ -131,7 +129,6 @@ class MyTableWidget(QWidget):
         except:
             logging.exception(Settings.projectFileManagementError)
             return False
-            pass
 
         
         #create step
@@ -183,13 +180,16 @@ class MyTableWidget(QWidget):
         #save project and exit
         
         self.projectmgr.saveLocalProject()
-        if(self.threadForUpDown.isAlive() == False):
+        if(self.threadForUpDown.isAlive() == False and isUpload == True):
             self.threadForUpDown = UpDownLoadThread(self)
             self.threadForUpDown.isUpLoad = True
             self.threadForUpDown.start()
         
         return True
         
+    def uploadProjectsToAws(self):
+        pass
+
 
 
 
