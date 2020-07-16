@@ -352,7 +352,7 @@ class StudentBodyWidget(MyContainer):
         self.nextItem = None
         self.nestedItems = []
         self.currentAnchorPixmapUrl = None
-        self.markWidget = QWidget(self)
+        
         
 
         #set timer
@@ -361,6 +361,7 @@ class StudentBodyWidget(MyContainer):
         self.timer.timeout.connect(self.processAnchorAnimation)
         self.timer.start()
         self.step = 0
+
         self.anchorDlg = QAnchorDialog(self)
         self.anchorDlg.setWindowFlags(Qt.FramelessWindowHint|Qt.Dialog)
         
@@ -413,16 +414,6 @@ class StudentBodyWidget(MyContainer):
             self.anchorDlg.move(X,Y)
             self.anchorDlg.hideAllChild()
             self.step = 1
-
-            ############check me here this is for test
-            
-            
-            self.markWidget.setWindowFlags(Qt.FramelessWindowHint|Qt.WindowStaysOnTopHint|Qt.Dialog)
-            self.markWidget.setStyleSheet("background-color:black")
-            self.markWidget.setAttribute(Qt.WA_StyledBackground)
-            self.markWidget.move(X,Y)
-            self.markWidget.show()
-            print("anchordilg",anchorUrl,posx,X,Y)
             
             #############check me here this is for test
             pass
@@ -436,12 +427,9 @@ class StudentBodyWidget(MyContainer):
 
     def processAnchorAnimation(self):
 
-        if(self.step>7 or self.step ==0):
+        if((self.step > 7 and self.step < 9) or self.step ==0):
             if(self.anchorDlg is not None):
-                if(self.step<9):
-                    self.anchorDlg.hide()
-                    if(self.markWidget is not None):
-                        self.markWidget.close()
+                self.anchorDlg.hide()
             return
         if(self.step%2):
             logging.info("anchor dialgo is showing now")
@@ -555,7 +543,7 @@ class StudentBodyWidget(MyContainer):
                 self.layout.addWidget(item)
                 self.itemList.append(item)
                 item.installEventFilter(self)
-                item.isChild = (curInfo.isChild == "true")
+                # item.isChild = (curInfo.isChild == "true")
                 try:
                     item.posx = curInfo.spotposx
                     item.posy = curInfo.spotposy

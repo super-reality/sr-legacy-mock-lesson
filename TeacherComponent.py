@@ -586,7 +586,7 @@ class MyListWidget(QWidget):
         elif event.type() == QEvent.MouseButtonPress and type(source).__name__ == 'CommonHeaderLabel':
             #change this item as child
             self.currentItem = source.parentWidget()
-            self.currentItem.isChild = not self.currentItem.isChild
+            # self.currentItem.isChild = not self.currentItem.isChild#check me here , removed child property
             self.showAllItems()
             return super(MyListWidget,self).eventFilter(source,event)
 
