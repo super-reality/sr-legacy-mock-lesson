@@ -2,7 +2,7 @@ import sys
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QDialogButtonBox,QMessageBox,\
 QAction, QTabWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QFrame,QLabel,QSlider,QScrollArea,QCheckBox,QSizePolicy,QFileDialog,QDockWidget,\
-     QDialog,QTextEdit,QSizeGrip,QToolButton,QGraphicsOpacityEffect
+     QDialog,QTextEdit,QSizeGrip,QToolButton,QGraphicsOpacityEffect,QProgressBar,QTreeWidget,QTreeWidgetItem,QAbstractItemView,QAbstractScrollArea
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPaintDevice,QPainter,QPen,QColor
 from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent,QTimer,QPoint,pyqtSignal,QRect
@@ -14,6 +14,9 @@ from PyQt5.QtCore import Qt,QUrl
 from MyUtil import getPixmapFromScreen, isImageUrl,getScreenSize
 from threading import Thread
 import time
+import MyUtil
+import Globals
+import os
 
 class MyFrame(QtWidgets.QWidget):
 
@@ -732,6 +735,9 @@ class MyDropableLable(QLabel):
         self.setPixmap(QPixmap('icons/placeholder.png'))
         self.setAcceptDrops(True)
         pass
+    def initLablePixmap(self):
+        self.setPixmap(QPixmap('icons/placeholder.png'))
+        pass
     def dragEnterEvent(self,e):
         m = e.mimeData()
         if m.hasUrls():
@@ -944,3 +950,223 @@ class MyRow(QWidget):
         self.layout.insertWidget(self.layout.count()-1,item)
 
         pass
+
+
+
+
+class MyTree(QTreeWidget):
+    sig_doubleclick = pyqtSignal(str)
+    def __init__(self,parent,fromAws=False):
+        # remove default arrow icon
+        super(MyTree, self).__init__(parent)
+        self.setHeaderHidden(True)
+        self.TreeRoot = self.invisibleRootItem()
+        self.setStyleSheet("""    QTreeView::branch:open:has-children:!has-siblings{image:url(icons/stack.png)}
+                                  QTreeView::branch:!has-children:!has-siblings:adjoins-item{image:url(icons/stack.png)}
+                                  QTreeView::branch:has-siblings:adjoins-item{image:url(icons/stack.png)}
+                                  QTreeView::branch:open:has-children:has-siblings{image:url(icons/stack.png)}
+                                  QTreeView::branch:closed:has-children:has-siblings{image:url(icons/stack.png)}
+                                  QTreeView::branch:closed:has-children:!has-siblings{image:url(icons/stack.png)}
+                                  QTreeView::branch:open:has-children{image:url(icons/stack.png)}
+                                  QTreeView::branch:closed:has-children{image:url(icons/stack.png)}
+                                  QTreeView::branch:open:{image:url(icons/stack.png)}
+                                  QTreeView::branch:closed:{image:url(icons/stack.png)}
+                                  QTreeView::branch:end:{image:url(icons/stack.png)}
+                                  ;""")
+        self.iconPath = Settings.getSetting()['treeiconpath']
+        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        
+        #load initial data for treeview
+        self.text_to_titem = TextToTreeItem()
+        self.find_str = ""
+        self.found_titem_list = []
+        self.found_idx = 0
+        self.fromAws = fromAws
+        
+        
+        self.recurse_jdata(self.loadData(), self.TreeRoot)
+        self.addTopLevelItem(self.TreeRoot)
+        self.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+        pass
+    
+    def recurse_jdata(self, jdata, tree_widget):
+        
+        text_list = []
+
+        if isinstance(jdata, dict):
+            for key, val in jdata.items():
+                text_list.append(str(key))
+                row_item = MyTreeItem(str(key),isParent=True)
+                self.text_to_titem.append(text_list, row_item)
+                tree_widget.addChild(row_item)
+                self.recurse_jdata(val,row_item)
+                pass
+        elif isinstance(jdata, list):
+            for i, val in enumerate(jdata):
+                if isinstance(val,dict):
+                    (key, val) = list(val.items())[0]
+                    text_list.append(str(key))
+                    row_item = MyTreeItem(str(key),isParent=True)
+                    self.text_to_titem.append(text_list, row_item)
+                    tree_widget.addChild(row_item)
+                    self.recurse_jdata(val,row_item)
+                    pass
+                elif isinstance(val,str):
+                    text_list.append(str(val))
+                    row_item = MyTreeItem(str(val))
+                    self.text_to_titem.append(text_list, row_item)
+                    text_list.remove(str(val))
+                    tree_widget.addChild(row_item)
+                else:
+                    pass
+        elif isinstance(jdata,str):
+            text_list.append(str(jdata))
+            row_item = MyTreeItem(str(jdata))
+            self.text_to_titem.append(text_list, row_item)
+            tree_widget.addChild(row_item)
+        else:
+            print("This should never be reached!")
+
+    def find_button_clicked(self,find_str):
+
+        # find_str = self.find_box.text()
+
+        # Very common for use to click Find on empty string
+        if find_str == "":
+            return
+
+        # New search string
+        if find_str != self.find_str:
+            self.find_str = find_str
+            self.found_titem_list = self.text_to_titem.find(self.find_str)
+            self.found_idx = 0
+        else:
+            item_num = len(self.found_titem_list)
+            self.found_idx = (self.found_idx + 1) % item_num
+        try:
+            self.tree_widget.setCurrentItem(self.found_titem_list[self.found_idx])
+        except:
+            print('Not founded node')
+
+    def loadData(self,isAws=False):
+        """ 
+        Load data from api or any other data source and return json object
+        """
+        # return data for test
+        if(self.fromAws):
+            return MyUtil.getDataFromBucket()
+        else:
+            return MyUtil.getDataFromCurrentTeacherFolder()
+
+    def insertItem(self,label,path,isParent):
+
+        # newItem = MyTreeItem(text = label,isParent = isParent, iconPath = self.iconPath)
+        try:
+            pass
+        except:
+            pass
+
+    def refresh(self,data=None):
+        self.clear()
+        #load initial data for treeview
+        self.text_to_titem = TextToTreeItem()
+        self.find_str = ""
+        self.found_titem_list = []
+        self.found_idx = 0
+        if(data is None):
+            self.recurse_jdata(self.loadData(), self.TreeRoot)
+        else:
+            self.recurse_jdata(data,self.TreeRoot)
+        pass
+    
+    def dropEvent(self,event):
+        
+        item=self.itemAt(event.pos())
+        pathSource = os.path.join(Globals.projectmgr.getTeacherProjectsLocalPath(), self.currentItem().getPath())
+        
+        if(item is None):
+            try:
+                shutil.move(pathSource,Globals.projectmgr.getTeacherProjectsLocalPath())
+                super(MyTree,self).dropEvent(event)
+                self.refresh()
+            except:
+                event.ignore()
+                pass
+            return
+        if(item.isParent):
+            pathDist = os.path.join(Globals.projectmgr.getTeacherProjectsLocalPath(), item.getPath())
+            try:
+                shutil.move(pathSource,pathDist)
+                super(MyTree,self).dropEvent(event)
+                self.refresh()
+            except:
+                event.ignore()
+                pass
+            
+        else:
+            event.ignore()
+
+    def mouseDoubleClickEvent(self,event):
+        self.sig_doubleclick.emit(self.currentItem().getPath())
+        super(MyTree,self).mouseDoubleClickEvent(event)
+        pass
+
+
+
+
+class MyTreeItem(QTreeWidgetItem):
+
+    def __init__(self,text = 'None',iconPath='icons/directory.png',isParent = False):
+
+        super(MyTreeItem, self).__init__()
+
+        self.isParent = isParent
+        self.setText(0,text)
+        
+        if(isParent):
+            font = QFont('Arial',10)
+            font.setBold(True)
+            self.setFont(0,font)
+            self.setIcon(0,QIcon(iconPath))
+        else:
+            font = QFont('Arial',12)
+            self.setFont(0,font)
+
+    def getPath(self):
+        item = self
+        paths = []
+        while(item is not None):
+            paths.insert(0,item.text(0))
+            item = item.parent()
+        curPath = ""
+        for path in paths:
+            curPath = os.path.join(curPath,path)
+        return curPath
+
+
+class TextToTreeItem:
+
+    def __init__(self):
+        self.text_list = []
+        self.titem_list = []
+
+    def append(self, text_list, titem):
+        for text in text_list:
+            self.text_list.append(text)
+            self.titem_list.append(titem)
+
+    # Return model indices that match string
+    def find(self, find_str):
+
+        titem_list = []
+        for i, s in enumerate(self.text_list):
+            if find_str in s:
+                titem_list.append(self.titem_list[i])
+
+        return titem_list
+
+
+    

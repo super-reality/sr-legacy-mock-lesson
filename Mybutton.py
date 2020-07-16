@@ -296,6 +296,20 @@ class DeleteButton(MyCommonButton):
     def leaveEvent(self,event):
         self.setWindowOpacity(0.1)
 
+class NewProjectButton(MyCommonButton):
+
+    def __init__(self,parent):
+        super(NewProjectButton,self).__init__()
+        self.parent = parent
+        self.setStyleSheet('border:None')
+        self.setIcon(QIcon('icons/newProject.png'))
+
+    def enterEvent(self,event):
+        self.setCursor(QCursor(Qt.PointingHandCursor))
+        
+    def leaveEvent(self,event):
+        self.setWindowOpacity(0.1)
+
 class SignalButton(MyCommonButton):
 
     def __init__(self,parent):

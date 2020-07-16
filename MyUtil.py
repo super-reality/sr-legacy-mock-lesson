@@ -21,6 +21,7 @@ import os
 import json
 from collections import namedtuple
 
+import boto3
 
 #################### Get project Tree from current Teacher Lessson folder ##########################
 
@@ -51,9 +52,66 @@ def isLeaf(path=None):
         return False
 
 def getDataFromCurrentTeacherFolder():
+    
     result = []
     path_to_dict( os.path.join(os.getcwd(),"ProjectsForTeacher") , result )
     return result
+
+def convertPathToObj(paths):
+    res = {}
+    leafs = []
+    isHaveObj = False
+    for path in paths:
+        items = str(path).split('\\')
+        if len(items) == 2:
+            leafs.append(items[0])
+        elif len(items) > 2:
+            len_t = len(items[0])
+            res.setdefault(items[0],[]).append(path[len_t+1:])
+            isHaveObj = True
+            pass
+        else:
+            pass
+    leafs = list(set(leafs))
+    if(isHaveObj == False):
+        paths.clear()
+        paths.extend(leafs)
+        return
+    for key, value in res.items():
+        leafs.append({key:value})
+    
+    paths.clear()
+    paths.extend(leafs)
+    
+    for item in paths:
+        if type(item).__name__ == 'dict':
+            key = list(item.keys())[0]
+            convertPathToObj(item[key])
+            pass
+        pass
+    
+
+    # convertPathToObj(res[key],leafs)
+   
+def getDataFromBucket(bucketName=""):
+
+    bucketName = Settings.bucketName
+    session = boto3.Session(
+        aws_access_key_id = Settings.aws_access_key_id,
+        aws_secret_access_key= Settings.aws_secret_access_key,
+        region_name= Settings.region_name
+    )
+    s3 = session.resource('s3')
+    bucket = s3.Bucket(bucketName)
+    result = []
+    for object in bucket.objects.filter(Prefix = ""):
+        result.append(object.key)
+    convertPathToObj(result)
+    return result
+
+def path_to_dict_s3( pathDir , childList=[] ):
+    
+    pass
 
 ########################################## End ###############################################
 

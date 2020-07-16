@@ -52,208 +52,6 @@ class HeaderClickable(CommonHeaderLabel):
         pass
 
 
-class TextToTreeItem:
-
-    def __init__(self):
-        self.text_list = []
-        self.titem_list = []
-
-    def append(self, text_list, titem):
-        for text in text_list:
-            self.text_list.append(text)
-            self.titem_list.append(titem)
-
-    # Return model indices that match string
-    def find(self, find_str):
-
-        titem_list = []
-        for i, s in enumerate(self.text_list):
-            if find_str in s:
-                titem_list.append(self.titem_list[i])
-
-        return titem_list
-
-
-class MyTree(QTreeWidget):
-
-    def __init__(self,parent):
-        # remove default arrow icon
-        super(MyTree, self).__init__(parent)
-        self.setHeaderHidden(True)
-        self.TreeRoot = self.invisibleRootItem()
-        self.setStyleSheet("""    QTreeView::branch:open:has-children:!has-siblings{image:url(icons/stack.png)}
-                                  QTreeView::branch:!has-children:!has-siblings:adjoins-item{image:url(icons/stack.png)}
-                                  QTreeView::branch:has-siblings:adjoins-item{image:url(icons/stack.png)}
-                                  QTreeView::branch:open:has-children:has-siblings{image:url(icons/stack.png)}
-                                  QTreeView::branch:closed:has-children:has-siblings{image:url(icons/stack.png)}
-                                  QTreeView::branch:closed:has-children:!has-siblings{image:url(icons/stack.png)}
-                                  QTreeView::branch:open:has-children{image:url(icons/stack.png)}
-                                  QTreeView::branch:closed:has-children{image:url(icons/stack.png)}
-                                  QTreeView::branch:open:{image:url(icons/stack.png)}
-                                  QTreeView::branch:closed:{image:url(icons/stack.png)}
-                                  QTreeView::branch:end:{image:url(icons/stack.png)}
-                                  ;""")
-        self.iconPath = Settings.getSetting()['treeiconpath']
-        self.setDragDropMode(QAbstractItemView.InternalMove)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.setDragEnabled(True)
-        self.setAcceptDrops(True)
-        
-        #load initial data for treeview
-        self.text_to_titem = TextToTreeItem()
-        self.find_str = ""
-        self.found_titem_list = []
-        self.found_idx = 0
-
-        
-        self.recurse_jdata(self.loadData(), self.TreeRoot)
-        self.addTopLevelItem(self.TreeRoot)
-        self.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
-        pass
-    
-    def recurse_jdata(self, jdata, tree_widget):
-        
-        text_list = []
-
-        if isinstance(jdata, dict):
-            for key, val in jdata.items():
-                text_list.append(str(key))
-                row_item = MyTreeItem(str(key),isParent=True)
-                self.text_to_titem.append(text_list, row_item)
-                tree_widget.addChild(row_item)
-                self.recurse_jdata(val,row_item)
-                pass
-        elif isinstance(jdata, list):
-            for i, val in enumerate(jdata):
-                if isinstance(val,dict):
-                    (key, val) = list(val.items())[0]
-                    text_list.append(str(key))
-                    row_item = MyTreeItem(str(key),isParent=True)
-                    self.text_to_titem.append(text_list, row_item)
-                    tree_widget.addChild(row_item)
-                    self.recurse_jdata(val,row_item)
-                    pass
-                elif isinstance(val,str):
-                    text_list.append(str(val))
-                    row_item = MyTreeItem(str(val))
-                    self.text_to_titem.append(text_list, row_item)
-                    text_list.remove(str(val))
-                    tree_widget.addChild(row_item)
-                else:
-                    pass
-        elif isinstance(jdata,str):
-            text_list.append(str(jdata))
-            row_item = MyTreeItem(str(jdata))
-            self.text_to_titem.append(text_list, row_item)
-            tree_widget.addChild(row_item)
-        else:
-            print("This should never be reached!")
-
-    def find_button_clicked(self,find_str):
-
-        # find_str = self.find_box.text()
-
-        # Very common for use to click Find on empty string
-        if find_str == "":
-            return
-
-        # New search string
-        if find_str != self.find_str:
-            self.find_str = find_str
-            self.found_titem_list = self.text_to_titem.find(self.find_str)
-            self.found_idx = 0
-        else:
-            item_num = len(self.found_titem_list)
-            self.found_idx = (self.found_idx + 1) % item_num
-        try:
-            self.tree_widget.setCurrentItem(self.found_titem_list[self.found_idx])
-        except:
-            print('Not founded node')
-
-    def loadData(self):
-        """ 
-        Load data from api or any other data source and return json object
-        """
-        # return data for test
-        return MyUtil.getDataFromCurrentTeacherFolder()
-
-    def insertItem(self,label,path,isParent):
-
-        # newItem = MyTreeItem(text = label,isParent = isParent, iconPath = self.iconPath)
-        try:
-            pass
-        except:
-            pass
-
-    def refresh(self):
-        self.clear()
-        #load initial data for treeview
-        self.text_to_titem = TextToTreeItem()
-        self.find_str = ""
-        self.found_titem_list = []
-        self.found_idx = 0
-        self.recurse_jdata(self.loadData(), self.TreeRoot)
-        pass
-    
-    def dropEvent(self,event):
-        
-        item=self.itemAt(event.pos())
-        pathSource = os.path.join(Globals.projectmgr.getTeacherProjectsLocalPath(), self.currentItem().getPath())
-        
-        if(item is None):
-            try:
-                shutil.move(pathSource,Globals.projectmgr.getTeacherProjectsLocalPath())
-                super(MyTree,self).dropEvent(event)
-                self.refresh()
-            except:
-                event.ignore()
-                pass
-            return
-        if(item.isParent):
-            pathDist = os.path.join(Globals.projectmgr.getTeacherProjectsLocalPath(), item.getPath())
-            try:
-                shutil.move(pathSource,pathDist)
-                super(MyTree,self).dropEvent(event)
-                self.refresh()
-            except:
-                event.ignore()
-                pass
-            
-        else:
-            event.ignore()
-
-
-
-
-class MyTreeItem(QTreeWidgetItem):
-
-    def __init__(self,text = 'None',iconPath='icons/directory.png',isParent = False):
-
-        super(MyTreeItem, self).__init__()
-
-        self.isParent = isParent
-        self.setText(0,text)
-        
-        if(isParent):
-            font = QFont('Arial',10)
-            font.setBold(True)
-            self.setFont(0,font)
-            self.setIcon(0,QIcon(iconPath))
-        else:
-            font = QFont('Arial',12)
-            self.setFont(0,font)
-
-    def getPath(self):
-        item = self
-        paths = []
-        while(item is not None):
-            paths.insert(0,item.text(0))
-            item = item.parent()
-        curPath = ""
-        for path in paths:
-            curPath = os.path.join(curPath,path)
-        return curPath
-
 class TeacherFirstToolbar(MyFrame):
 
     def __init__(self,parent):
@@ -272,12 +70,14 @@ class TeacherFirstToolbar(MyFrame):
 
 class TeacherSecondToolbar(MyFrame):
     sig_NewProject = pyqtSignal()
+    sig_newFolder = pyqtSignal()
     sig_EditProject = pyqtSignal()
     sig_DeleteProject = pyqtSignal()
     sig_SearchProject = pyqtSignal()
     sig_Social = pyqtSignal()
     sig_UploadToCloud = pyqtSignal()
     sig_PlayResume = pyqtSignal()
+
     def __init__(self,parent):
         super(TeacherSecondToolbar, self).__init__(parent)
         self.__initUI()
@@ -285,6 +85,7 @@ class TeacherSecondToolbar(MyFrame):
     def __initUI(self):
         hbox = MyHBoxLayout(self)
         self.bt_newfolder = NewFolderButton(self)
+        self.bt_newProject = NewProjectButton(self)
         self.bt_edit  = EditButton(self)
         self.bt_delete = DeleteButton(self)
         self.bt_searchplus = SearchPlusButton(self)
@@ -294,6 +95,7 @@ class TeacherSecondToolbar(MyFrame):
         self.bt_resume = PlayResumeButton(self)
 
         hbox.addWidget(self.bt_newfolder)
+        hbox.addWidget(self.bt_newProject)
         hbox.addWidget(self.bt_edit)
         hbox.addWidget(self.bt_delete)
         hbox.addWidget(self.bt_searchplus)
@@ -305,7 +107,8 @@ class TeacherSecondToolbar(MyFrame):
         hbox.setContentsMargins(0,0,0,0)
 
         #bind event
-        self.bt_newfolder.clicked.connect(self.sig_NewProject)
+        self.bt_newfolder.clicked.connect(self.sig_newFolder)
+        self.bt_newProject.clicked.connect(self.sig_NewProject)
         self.bt_edit.clicked.connect(self.sig_EditProject)
         self.bt_delete.clicked.connect(self.sig_DeleteProject)
         self.bt_searchplus.clicked.connect(self.sig_SearchProject)
@@ -644,8 +447,7 @@ class ClickStepItem(MyFrame):
         self.row_clickspot.show()
         self.row_imageRec.show()
         self.row_snapshot.show()
-        print("chekk",self.edit_header.toPlainText())
-        print("chekk1",self.edit_TextMatch.toPlainText())
+        
         if len(self.edit_TextMatch.toPlainText())>0:
             self.edit_TextMatch.show()
             self.checkbt_clickSpot.setChecked(False)
@@ -727,6 +529,12 @@ class MyListWidget(QWidget):
     def getItemsList(self):
         return self.listitems
 
+    def clear(self):
+        while len(self.listitems):
+            self.currentItem = self.listitems[0]
+            self.removeCurrentItem()
+        self.currentItem = None
+
     def removeCurrentItem(self):
         self.vbox.removeWidget(self.currentItem)
         self.listitems.remove(self.currentItem)
@@ -803,7 +611,7 @@ class MyListWidget(QWidget):
 class TeacherLandingPage(MyContainer):
 
     sig_currentItemChanged = pyqtSignal(str)
-
+    sig_DoubleClick = pyqtSignal(str)
     def __init__(self,parent):
         super(TeacherLandingPage, self).__init__(parent)
         self.parent = parent
@@ -816,13 +624,11 @@ class TeacherLandingPage(MyContainer):
         self.toolbarfirst  = TeacherFirstToolbar(self)
         self.toolbarsec = TeacherSecondToolbar(self)
 
-        self.tree = MyTree(self)
+        self.tree = MyTree(self,fromAws=False)
         self.toolbarfirst.bt_search.clicked.connect(self.find_item_with_name)
-
         
 
         vbox = MyVBoxLayout(self)
-
         #add all frame to a container.
 
         vbox.addWidget(self.toolbarfirst)
@@ -832,8 +638,10 @@ class TeacherLandingPage(MyContainer):
 
         #bind event
         self.tree.currentItemChanged.connect(self.currentItemChanged)
+        self.tree.sig_doubleclick.connect(self.sig_DoubleClick)
 
         return vbox
+    
 
     def currentItemChanged(self,item):
 
@@ -850,6 +658,9 @@ class TeacherLandingPage(MyContainer):
     def find_item_with_name(self):
 
         self.tree.find_button_clicked('acer')
+
+    def refresh(self):
+        self.tree.refresh()
 
 class TeacherNewLessionPage(MyContainer):
     procDone = pyqtSignal(str)
@@ -889,14 +700,19 @@ class TeacherNewLessionPage(MyContainer):
         self.Thirdtoolbar.bt_playbutton.clicked.connect(lambda:self.addItem('play'))
         self.Thirdtoolbar.bt_delete.clicked.connect(lambda:self.addItem('delete'))
 
-        self.newLessonbar.frame.mousePressEvent = self.gotoNewLessonPage
+        self.newLessonbar.frame.mousePressEvent = self.gotoNewLessonFromStepPage
         self.Secondtoolbar.edit_lesson_title.textChanged.connect(self.newLessonbar.setText)
         self.Secondtoolbar.anchorDialog.pixmapChanged.connect(self.pixmapChanged)
 
-
-        
         return self.layout
-    
+
+    def gotoNewLessonFromStepPage(self,event):
+        self.newLessonbar.hide()
+        self.Secondtoolbar.show()
+        #hide lessonwidget and anchordialgo
+        if(self.newLessonbar.listWidget.currentItem is not None):
+            self.newLessonbar.listWidget.currentItem.anchorDialog.hide()
+        pass    
     def pixmapChanged(self):
         self.newLessonbar.lbl_icon.setPixmap(self.Secondtoolbar.anchorDialog.pixmap())
 
@@ -925,11 +741,12 @@ class TeacherNewLessionPage(MyContainer):
                     self.gotoStepPage()
                     return
             else:
+                logging.info("new empty item has been added")
                 self.newLessonbar.listWidget.insertItem(ClickStepItem(self))
                 pass            
             pass
         elif(itemtype == 'cloud'):
-            self.newLessonbar.listWidget.insertItem(None)
+            # self.newLessonbar.listWidget.insertItem(None)
             pass
         elif(itemtype == 'play'):
             self.procDone.emit("start")
@@ -962,41 +779,45 @@ class TeacherNewLessionPage(MyContainer):
             return Settings.stepError
         return Settings.valid
     
+
     def gotoNewLessonPage(self,event):
         
         if(self.currentProjectPath != Globals.projectmgr.projectPath and Globals.projectmgr.projectPath is not None):
+            self.clearAllListItems()
+
             if self.LoadCurrentProject():
                 #emit signal
+                logging.info("loading current project..")
                 pass
             else:
-                return
+                return False
         if(MyUtil.isLeaf(self.currentProjectPath) == False):
-            return
-        
+            return False
 
+        logging.info("go to step page project..")
+        
         self.newLessonbar.hide()
         self.Secondtoolbar.show()
-        
+
         #hide lessonwidget and anchordialgo
         if(self.newLessonbar.listWidget.currentItem is not None):
             self.newLessonbar.listWidget.currentItem.anchorDialog.hide()
 
-                    
+        return True
+
+    def clearAllListItems(self):
+        logging.info("list items has been cleared")
+        self.newLessonbar.listWidget.clear()
 
     def LoadCurrentProject(self):
-
         self.currentProjectPath = Globals.projectmgr.projectPath
-        logging.info("project is located in " + self.currentProjectPath)
-
         if(MyUtil.isLeaf(self.currentProjectPath)):
             pass
-
         else:
             logging.info("Current item is not project folder.")
             return False
 
         self.data = MyUtil.loadData(os.path.join(self.currentProjectPath,Settings.projectFileName))
-        
         if(self.data is None):
             logging.info("Data is not found in here " + self.currentProjectPath)
             return False
@@ -1009,10 +830,10 @@ class TeacherNewLessionPage(MyContainer):
 
         if(self.data.header.anchorImageName is not None):
             self.Secondtoolbar.lbl_picture.setPixmap(QPixmap(os.path.join(Globals.projectmgr.projectPath,self.data.header.anchorImageName)))
+        else:
+            self.Secondtoolbar.lbl_picture.initLablePixmap()
         
         self.itemList = []
-        logging.info("list items has been cleared")
-        self.newLessonbar.listWidget.listitems.clear()
         for idx in range(len(self.data.lessons)):
             if(self.data.lessons[idx].type == Settings.lookStep):
                 pass
@@ -1099,6 +920,8 @@ class TeahcerNewLookStepPage(MyContainer):
 class TeacherTabWidget(MyContainer):
     gotoStudentTab = pyqtSignal(str)
     sig_saveCurrentProject = pyqtSignal(str)
+    sig_upLoadFolder = pyqtSignal(str)
+
     def __init__(self,parent):
         super(TeacherTabWidget,self).__init__(parent)
         self.currentWidget = None
@@ -1122,23 +945,57 @@ class TeacherTabWidget(MyContainer):
         #event binding
         self.landing_page.toolbarsec.sig_EditProject.connect(self.editProject)
         self.landing_page.toolbarsec.sig_NewProject.connect(self.createNewProject)
+        self.landing_page.toolbarsec.sig_newFolder.connect(self.createNewFolder)
         self.landing_page.toolbarsec.sig_DeleteProject.connect(self.deleteProject)
         self.landing_page.toolbarsec.sig_SearchProject.connect(self.searchProject)
         self.landing_page.toolbarsec.sig_Social.connect(self.gotoSocial)
         self.landing_page.toolbarsec.sig_UploadToCloud.connect(self.upLoadProjectToCloud)
         self.landing_page.toolbarsec.sig_PlayResume.connect(self.playLesson)
         self.landing_page.sig_currentItemChanged.connect(self.currentItemChanged)
+        self.landing_page.sig_DoubleClick.connect(self.editProject)
 
         self.lookstep_page.firsttoolbar.bt_book.clicked.connect(self.gotoLandingpage)
         self.lookstep_page.procDone.connect(self.gotoStudentTab)
 
     def currentItemChanged(self,leafPath):
+        
         Globals.projectmgr.currentProjectPath = leafPath
         Globals.projectmgr.changeProjectPath()
         
+    def createNewFolder(self):
 
-    def editProject(self):
+        pmgr = Globals.projectmgr
+        path = ""
+        if(pmgr.projectPath is None):
+            path = pmgr.getTeacherProjectsLocalPath()
+        else:
+            path = pmgr.projectPath
+        
+        name, done = QInputDialog.getText(self, 'Input Dialog', 'ENTER YOUR PROGRAM NAME:')
+        if(done):
+            pass
+        else:
+            return
+
+        #if leaf. select parent directory  
+        if(MyUtil.isLeaf(path)):
+            path = os.path.dirname(path)
+
+        #if this same name dir exist, replace with new one
+        path = os.path.join(path,name)
+        if os.path.exists(path):
+            shutil.rmtree(path,ignore_errors=True)
+        try:
+            os.mkdir(path)
+        except:
+            logging.info("can't create program folder in path: " + path)
+
+        #refresh tree object
+        self.landing_page.refresh()
+        pass
+    def editProject(self,path=None):
         # this is for edit project
+        
         self.gotoLooksteppage(param=Settings.gotoLessson)
         pass
     def createNewProject(self):
@@ -1174,6 +1031,7 @@ class TeacherTabWidget(MyContainer):
     def gotoSocial(self):
         pass
     def upLoadProjectToCloud(self):
+        self.sig_upLoadFolder.emit(Globals.projectmgr.projectPath)
         pass
     def playLesson(self):
         pass
@@ -1186,15 +1044,20 @@ class TeacherTabWidget(MyContainer):
         self.lookstep_page.hide()
         self.currentWidget.show()
 
-    def gotoLooksteppage(self,param = 0):
-        self.currentWidget = self.lookstep_page
-        self.hideAllButCurrent()
+    def gotoLooksteppage(self,param = 1):
         if(param == Settings.gotoLessson):
-            self.lookstep_page.gotoNewLessonPage(None)
+            logging.info("go to newlessonPage")
+            if self.lookstep_page.gotoNewLessonPage(None):
+                pass
+            else:
+                return
             pass
         elif(param == Settings.gotoStep):
+            logging.info("go to lessonstepPage")
             self.lookstep_page.gotoStepPage()
             pass
+        self.currentWidget = self.lookstep_page
+        self.hideAllButCurrent()
 
 
     def showConfirmDlg(self):

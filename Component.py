@@ -17,6 +17,8 @@ import Globals
 
 class MyTableWidget(QWidget):
     sig_startUpDown = pyqtSignal(int)
+    sig_playLesson = pyqtSignal(str)
+    sig_NewBucketData = pyqtSignal(list)
     def __init__(self, parent):
         super(MyTableWidget, self).__init__(parent)
 
@@ -43,8 +45,7 @@ class MyTableWidget(QWidget):
         self.layout.addWidget(self.tabs)
         self.setLayout(self.layout)
 
-        #binding event
-        self.tab_teacher.gotoStudentTab.connect(self.gotoStudentTab)
+        
 
         #projectmgr setup
         self.projectmgr = Globals.projectmgr
@@ -54,26 +55,95 @@ class MyTableWidget(QWidget):
         #event bind
         self.tab_student.sig_bt_signal.connect(self.sig_bt_signal)
         self.tab_student.sig_bt_carmin.connect(self.sig_bt_carmin)
+        self.tab_student.sig_bt_resumeplay_with_Path.connect(self.sig_bt_resumeplay_with_Path)
+        self.sig_playLesson.connect(self.tab_student.changeProjectPathForLesson)
+        self.tab_teacher.sig_upLoadFolder.connect(self.UploadFolderToCloud)
+        self.sig_NewBucketData.connect(self.refreshStudentTab)
+        self.tab_teacher.gotoStudentTab.connect(self.gotoStudentTab)
         self.sig_startUpDown.connect(self.startUpDown)
         self.tab_teacher.sig_saveCurrentProject.connect(self.saveProjectToLocal)
-    
+        self.tab_student.sig_doublClickedItem.connect(self.processDoubleClickItemEvent)
+
+        self.relativePath = None
+        self.isStarting = False
+
+    def processDoubleClickItemEvent(self,path):
+        #if leaf pass
+        self.relativePath = path
+        path = Globals.projectmgr.getProjectPathFromRelativePath(isTeacherProject=False,relativePath=path)
+
+        #if path not exist , then download it first
+        if os.path.exists(path) == False:
+            self.sig_bt_signal()
+            pass
+
+        if MyUtil.isLeaf(path):
+            pass
+        else:
+            return
+        self.sig_bt_resumeplay_with_Path(path)
+        #change play button to resume button
+        self.tab_student.changeStatePlayButton()
+        pass
+
+    def UploadFolderToCloud(self,path=None):
+        if(path is None):
+            return
+        self.uploadProjectsToAws()
+
     def startUpDown(self,state = -1):
+        
         if(state == 0):
             self.waitForLoading.start()
         else:
             self.waitForLoading.stop()
-            self.sig_bt_carmin()
-            
+            if(self.isStarting == True):
+                self.isStarting = False
+                #emit signal to play lesson
+                self.sig_playLesson.emit(self.relativePath)
+        
 
-    def sig_bt_carmin(self):
-        projectList = self.projectmgr.getProjectNameList()
-        self.tab_student.setupProjectList(projectList)
+    def sig_bt_resumeplay_with_Path(self,path):
+        
+        self.relativePath = path
+        if(self.tab_student.studentList.isHidden() == True):
+            # just go to student body page
+            self.sig_playLesson.emit(self.relativePath)
+            return
+        if os.path.exists(Globals.projectmgr.getProjectPathFromRelativePath(isTeacherProject=False,relativePath=self.relativePath)):
+            #this is project dir go to step page directly
+            self.sig_playLesson.emit(self.relativePath)
+            return
+        
+        self.downLoadProjectsFromAws()
+        self.isStarting = True
+
         pass
+
+    def refreshStudentTab(self,data):
+        self.tab_student.refresh(data)
+        pass
+    def sig_bt_carmin(self):
+        if(self.tab_student.studentList.isHidden()):
+            self.tab_student.setupProjectList("")
+            pass
+        else:
+            self.refreshProjectList()
+            pass
+        pass
+    
     def sig_bt_signal(self):
+        self.relativePath = self.tab_student.getCurrentPath()
+        if(self.relativePath is None):
+            self.refreshProjectList()
+            pass
+        else:
+            self.downLoadProjectsFromAws()
+        pass
+    def refreshProjectList(self):
         if(self.threadForUpDown.isAlive() == False):
             self.threadForUpDown = UpDownLoadThread(self)
-            self.threadForUpDown.currentProjectName = os.path.basename(Globals.projectmgr.projectPath)
-            self.threadForUpDown.isUpLoad = False
+            self.threadForUpDown.mode = Settings.refreshProjectsListMode
             self.threadForUpDown.start()
         pass
 
@@ -116,12 +186,11 @@ class MyTableWidget(QWidget):
         try:
             resp = self.projectmgr.createProject(projectName,title,description,tags,pixmapRefer,pixmapAnchor)
             if(resp == Settings.projectAlreadyExist):
-                dlg_resp = CustomDialog.showStandardMsgbox(self.window(),"Project Folder Already Exist, Will you replace it with new one?")
-                if(dlg_resp):
-                    self.projectmgr.deleteCurrentProject()
-                    self.projectmgr.createProject(projectName,title,description,tags,pixmapRefer,pixmapAnchor)
-                else:
-                    return False
+                # dlg_resp = CustomDialog.showStandardMsgbox(self.window(),Settings.projectAlreadyExistErrorText)
+                self.projectmgr.deleteCurrentProject()
+                logging.info("delete current Project "+ self.projectmgr.projectPath + " recreating project")
+                self.projectmgr.createProject(projectName,title,description,tags,pixmapRefer,pixmapAnchor)
+
             elif(resp == Settings.projectNameNotSpecified):
                 return False
             else:
@@ -180,15 +249,33 @@ class MyTableWidget(QWidget):
         #save project and exit
         
         self.projectmgr.saveLocalProject()
-        if(self.threadForUpDown.isAlive() == False and isUpload == True):
-            self.threadForUpDown = UpDownLoadThread(self)
-            self.threadForUpDown.isUpLoad = True
-            self.threadForUpDown.start()
-        
+
+        if(isUpload == True):
+            self.uploadProjectsToAws()
         return True
         
     def uploadProjectsToAws(self):
+
+        if(self.threadForUpDown.isAlive() == False):
+            self.threadForUpDown = UpDownLoadThread(self)
+            self.threadForUpDown.localPath = self.projectmgr.projectPath
+            self.threadForUpDown.isUpLoad = True
+            self.threadForUpDown.start()
+
         pass
+
+    def downLoadProjectsFromAws(self):
+
+        if(self.threadForUpDown.isAlive() == False):
+            self.threadForUpDown = UpDownLoadThread(self)
+            if(self.relativePath is None):
+                return Settings.selectProjectBeforeDownloadingError
+            self.threadForUpDown.localPath = os.path.join(self.projectmgr.getStudentProjectsLocalPath())
+            self.threadForUpDown.remotePath = self.relativePath
+            self.threadForUpDown.isUpLoad = False
+            self.threadForUpDown.start()
+
+        return True
 
 
 

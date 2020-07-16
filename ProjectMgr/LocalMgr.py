@@ -6,12 +6,16 @@ import numpy as np
 import random
 import os
 import sys
-sys.path.append("..")
+
+
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+
 from Setting import Settings
 import shutil
 from ProjectMgr.UpDownloadProject import DownloadProject,UploadProject
 import MyUtil
 import logging
+
 # define the name of the directory to be created
 
 class LocalProjectMgrVersion1:
@@ -35,6 +39,14 @@ class LocalProjectMgrVersion1:
     def changeProjectPath(self):
         self.projectPath = os.path.join(self.__localPathForTeacher,self.currentProjectPath)
         pass
+
+    def getProjectPathFromRelativePath(self,isTeacherProject=False,relativePath=None):
+        if relativePath is None:
+            return
+        if(isTeacherProject):
+            return os.path.join(self.__localPathForTeacher,relativePath)
+        else:
+            return os.path.join(self.__localPathForStudent,relativePath)
 
     def getAbsCurrentProjectPath(self):
         if(self.currentProjectPath is None):
@@ -62,7 +74,7 @@ class LocalProjectMgrVersion1:
 
     def deleteCurrentProject(self):
         if os.path.exists(self.projectPath):
-            shutil.rmtree(self.projectPath)
+            shutil.rmtree(self.projectPath,ignore_errors=True)
         
     def createTemplateProject(self,treePath=None):
         if(treePath is None):
@@ -91,8 +103,17 @@ class LocalProjectMgrVersion1:
         
         if not os.path.exists(self.projectPath):
             os.makedirs(self.projectPath)
+            logging.info("creating project success")
         else:
+            logging.info("creating project failed ")
             return Settings.projectAlreadyExist
+        try:
+            renamePath = os.path.join(os.path.dirname(self.projectPath),title)
+            os.rename(self.projectPath,renamePath)
+        except:
+            logging.info("project rename failed")
+        self.projectPath = renamePath
+        #change project directory name
         
         # create icon file and get file path of it.
         self.json = {
@@ -259,14 +280,14 @@ class LocalProjectMgrVersion1:
             json.dump(self.json, outfile)
         
     def downLoadProjectsFromRemote(self):
-        DownloadProject(self.__localPathForStudent)
+        DownloadProject(self.__localPathForStudent,Settings.bucketName)
         pass
 
     def getDownLoadPath(self):
         return self.__localPathForStudent
 
     def uploadProjectsToRemote(self):
-        UploadProject(self.__localPathForTeacher)
+        UploadProject("",self.projectPath)
         pass
 
     def getUploadPath(self):
@@ -276,13 +297,18 @@ class LocalProjectMgrVersion1:
         localpath = self.__localPathForStudent
         listPath = os.listdir(localpath)
         return listPath
-        
 
 class LocalProjectMgr(LocalProjectMgrVersion1):
+    
     def __init__(self):
         super(LocalProjectMgr,self).__init__()
-
+    
     def createProject(self,projectName=None,title='title',description='description',tags=None,referPixmap=None,anchorPixmap=None):
         result = super(LocalProjectMgr,self).createProject(projectName=projectName,title=title,description=description,tags=tags,referPixmap=referPixmap,anchorPixmap=anchorPixmap)
         return result
+
+
+
+
+
 

@@ -7,7 +7,6 @@ from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent,QTimer
 from Setting import Settings
 from Mybutton import *
 from Container import *
-from ProjectMgr.LocalMgr import LocalProjectMgr
 import os
 from MyUtil import match_image,drawRectToPixmap,convertPixmapToGray,get_marked_image,convertCV2ImageToPixmap,loadData
 import logging
@@ -187,6 +186,7 @@ class CommonLessonLookStepItem(CommonLessonItem):
 class CommonLessonClickStepItem(CommonLessonItem):
 
     sig_ImageClicked = pyqtSignal()
+    sig_showed = pyqtSignal()
     def __init__(self,parent):
         super(CommonLessonClickStepItem,self).__init__(parent)
         #change image component with new one
@@ -249,16 +249,18 @@ class CommonLessonClickStepItem(CommonLessonItem):
     def showEvent(self,event):
 
         if(self.matchText is not None):
+
             self.check_bt_showTestBox.show()
         else:
             self.check_bt_showTestBox.hide()
+
         super(CommonLessonClickStepItem,self).showEvent(event)
+        self.sig_showed.emit()
         pass
 
     def display(self,isminimized=False):
 
         super(CommonLessonClickStepItem,self).display(isminimized)
-
 
 class CommonLessonMatchStepItem(CommonLessonItem):
     
@@ -350,6 +352,7 @@ class StudentBodyWidget(MyContainer):
         self.nextItem = None
         self.nestedItems = []
         self.currentAnchorPixmapUrl = None
+        self.markWidget = QWidget(self)
         
 
         #set timer
@@ -359,7 +362,8 @@ class StudentBodyWidget(MyContainer):
         self.timer.start()
         self.step = 0
         self.anchorDlg = QAnchorDialog(self)
-        self.anchorDlg.setWindowFlags(Qt.FramelessWindowHint|Qt.WindowStaysOnTopHint|Qt.Dialog)
+        self.anchorDlg.setWindowFlags(Qt.FramelessWindowHint|Qt.Dialog)
+        
         #event binding
         self.window().moveEvent = self.processMoveEvent
         # self.initializeObject(path)
@@ -402,12 +406,25 @@ class StudentBodyWidget(MyContainer):
                 # self.anchorDlg.setAttribute(Qt.FramelessWindowHint)
                 # self.anchorDlg.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
                 pass
+            
             logging.info("anchor dialog is moving to %s, %s",X,Y)
             logging.info("anchor dialog is resizing to %s, %s",H,W)
             self.anchorDlg.resize(H,W)
             self.anchorDlg.move(X,Y)
             self.anchorDlg.hideAllChild()
             self.step = 1
+
+            ############check me here this is for test
+            
+            
+            self.markWidget.setWindowFlags(Qt.FramelessWindowHint|Qt.WindowStaysOnTopHint|Qt.Dialog)
+            self.markWidget.setStyleSheet("background-color:black")
+            self.markWidget.setAttribute(Qt.WA_StyledBackground)
+            self.markWidget.move(X,Y)
+            self.markWidget.show()
+            print("anchordilg",anchorUrl,posx,X,Y)
+            
+            #############check me here this is for test
             pass
         else:
             pass
@@ -423,6 +440,8 @@ class StudentBodyWidget(MyContainer):
             if(self.anchorDlg is not None):
                 if(self.step<9):
                     self.anchorDlg.hide()
+                    if(self.markWidget is not None):
+                        self.markWidget.close()
             return
         if(self.step%2):
             logging.info("anchor dialgo is showing now")
@@ -438,7 +457,11 @@ class StudentBodyWidget(MyContainer):
     def currentProjectChanged(self,name):
         self.projectPath = os.path.join(os.getcwd(),Settings.projectStudentPath)
         self.projectPath = os.path.join(self.projectPath,name)
-        self.initializeObject(self.projectPath)
+        if(MyUtil.isLeaf(self.projectPath)):
+            self.initializeObject(self.projectPath)
+        else:
+            #alert pls select a valid project file
+            pass
         pass
 
     def initializeObject(self,projectPath):
@@ -513,6 +536,7 @@ class StudentBodyWidget(MyContainer):
 
                 curInfo = self.data.lessons[idx]
                 item = CommonLessonClickStepItem(self)
+                item.sig_showed.connect(self.currentItemshowed)
                 if(curInfo.anchorPixmap is None):
                     item.anchorPixmapUrl = None
                     pass
@@ -609,6 +633,10 @@ class StudentBodyWidget(MyContainer):
         self.prevItem.clicked.connect(self.gotoPrev)
         self.nextArrowWidget.installEventFilter(self)
     
+    def currentItemshowed(self):
+        #pls code here after current item showed but it has no width and height
+        pass
+
     def showEvent(self,event):
         # self.moveNextItem()
         if(self.itemHeader is not None):
@@ -658,6 +686,10 @@ class StudentBodyWidget(MyContainer):
                 pass
             else:
                 pass
+        # elif(event.type() == QEvent.Show and source == self.currentItem):
+        #     self.movePrevItem()
+        #     self.moveNextItem()
+        #     pass
         else:
             pass
         return super(StudentBodyWidget,self).eventFilter(source,event)
@@ -665,12 +697,12 @@ class StudentBodyWidget(MyContainer):
     def movePrevItem(self):
         self.prevItem.setSize(self.prevItem.width(),self.currentItem.lbl_icon.sizeHint().height()+Settings.commonRowHeightChild)
         self.prevItem.show()
-        self.prevItem.move(self.currentItem.mapToGlobal(QPoint(0,0))-QPoint(self.prevItem.width(),4))
+        self.prevItem.move(self.mapToGlobal(QPoint(0,0))-QPoint(self.prevItem.width(),-Settings.delta))
 
     def moveNextItem(self):
         
         self.nextArrowWidget.setSize(self.nextArrowWidget.width(),self.currentItem.lbl_icon.sizeHint().height()+Settings.commonRowHeightChild)
-        self.nextArrowWidget.move(self.currentItem.mapToGlobal(QPoint(0,0)) + QPoint(self.window().width() - self.nextArrowWidget.width()//2,-4))
+        self.nextArrowWidget.move(self.mapToGlobal(QPoint(0,0)) + QPoint(self.window().width() - self.nextArrowWidget.width()//2,Settings.delta))
 
     def play(self,event):
         if(self.itemHeader is not None):
@@ -808,13 +840,18 @@ class MyProjectListWidget(QListWidget):
         pass
 
 class StudentProjectList(MyContainer):
+
     sig_CurrentProjectChanged = pyqtSignal(str)
+
     def __init__(self,parent):
+
         super(StudentProjectList,self).__init__(parent)
         self.__initUI()
+
         pass               
     def __initUI(self):
-        self.projectList = MyProjectListWidget(self)
+
+        self.projectList = MyTree(self,fromAws=True)
         self.vbox = MyVBoxLayout(self)
         self.vbox.addWidget(self.projectList)
         
@@ -823,23 +860,21 @@ class StudentProjectList(MyContainer):
         #set style sheet
         self.setContentsMargins(10,0,10,0)
         
+        
         pass
     def currentItemChanged(self,cur,prev):
-        if(cur is not None):
-            self.sig_CurrentProjectChanged.emit(cur.text())
-        else:
-            return None
-
-    def display(self,projectNameList):
-        self.projectList.clear()
-        for idx,item in enumerate(projectNameList):
-            self.projectList.insertItem(idx,item)
-        self.projectList.setCurrentRow(0)
         
-    def getSelectedItemName(self):
-        if len(self.projectList.selectedItems()) == 0:
+        pass
+
+
+    def display(self,projectNameList=[]):
+        # self.projectList.refresh()
+        pass
+        
+    def getCurrentPath(self):
+        if(self.projectList.currentItem() is None):
             return None
-        return self.projectList.selectedItems()[0].text()
+        return self.projectList.currentItem().getPath()
 
 class StudentTabWidget(MyContainer):
 
@@ -851,30 +886,33 @@ class StudentTabWidget(MyContainer):
     sig_bt_social = pyqtSignal()
     sig_bt_speaker = pyqtSignal()
     sig_bt_search = pyqtSignal()
+    sig_bt_resumeplay_with_Path = pyqtSignal(str)
+    sig_doublClickedItem = pyqtSignal(str)
+    
 
     def __init__(self,parent):
         super(StudentTabWidget,self).__init__(parent)
         self.__initUI()
 
     def __initUI(self):
+
         vbox = MyVBoxLayout(self)
         self.studentToolBar = StudentHeaderToolBar(self)
         self.studentBody  =  StudentBodyWidget(self)
         self.studentList = StudentProjectList(self)
+        
         vbox.addWidget(self.studentToolBar)
         vbox.addWidget(self.studentBody)
         vbox.addWidget(self.studentList)
         vbox.addStretch(1)
 
-
         # hide some items at start.
         self.studentList.hide()
         #bind event.
         self.studentList.sig_CurrentProjectChanged.connect(self.studentBody.currentProjectChanged)
-        self.sig_bt_resumeplay.connect(self.showSelectedLesson)
+        # self.sig_bt_resumeplay.connect(self.showSelectedLesson)
 
-
-        self.studentToolBar.bt_resumeplay.clicked.connect(self.processPlayResume)
+        self.studentToolBar.sig_bt_resumeplay.connect(self.processPlayResume)
         self.studentBody.resetEvent.connect(self.processResetEvent)
         self.studentToolBar.sig_bt_signal.connect(self.sig_bt_signal)
         self.studentToolBar.sig_bt_resumeplay.connect(self.sig_bt_resumeplay)
@@ -883,8 +921,29 @@ class StudentTabWidget(MyContainer):
         self.studentToolBar.sig_bt_social.connect(self.sig_bt_social)
         self.studentToolBar.sig_bt_speaker.connect(self.sig_bt_speaker)
         self.studentToolBar.sig_bt_search.connect(self.sig_bt_search)
+        self.studentList.projectList.sig_doubleclick.connect(self.sig_doublClickedItem)
+        
         pass
     
+    def changeStatePlayButton(self):
+        self.studentToolBar.bt_resumeplay.changeState()
+        pass
+    
+    def changeProjectPathForLesson(self,pathToProject=None):
+        if(pathToProject is None):
+            return 
+        self.studentBody.currentProjectChanged(pathToProject)
+        self.studentBody.play(None)
+        self.showSelectedLesson()
+
+    def getCurrentPath(self):
+        return self.studentList.getCurrentPath()
+        pass
+    
+    def refresh(self,data=None):
+        self.studentList.projectList.refresh(data)
+        pass
+
     def setupProjectList(self,projectNameList):
         self.studentList.display(projectNameList)
         self.showProjectList()
@@ -902,14 +961,15 @@ class StudentTabWidget(MyContainer):
 
     def processPlayResume(self):
         if self.studentToolBar.bt_resumeplay.isPlaying == True:
-            self.studentBody.play(None)
+            self.sig_bt_resumeplay_with_Path.emit(self.studentList.getCurrentPath())
+            # self.studentBody.play(None)
         else:
             if(self.studentBody.currentItem is not None):
                 self.studentBody.currentItem.hide()
             if(self.studentBody.prevItem is not None):
                 self.studentBody.prevItem.hide()
             self.studentBody.hideAllNextAndNestedItems()
-
+    
     def processResetEvent(self):
         self.studentToolBar.bt_resumeplay.reset()
         # self.studentToolBar.bt_resumeplay.changeState()

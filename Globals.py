@@ -3,7 +3,6 @@ import os
 from Setting import Settings
 
 projectmgr = LocalMgr.LocalProjectMgr()
-
 def getAbsolutePathFromNodePath(path = None):
     if(path is None):
         return
