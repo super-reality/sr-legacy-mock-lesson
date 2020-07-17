@@ -75,8 +75,23 @@ class LocalProjectMgrVersion1:
             print("Directory " , self.__localPathForStudent ,  " already exists")
 
     def deleteCurrentProject(self):
+        projectPath = self.projectPath[:-1]
+
+        if(self.projectPath[-1] == '/' or self.projectPath[-1] == '\\'):
+            projectPath = self.projectPath[:-1]
+        if(self.__localPathForTeacher == projectPath):
+            return False
+
         if os.path.exists(self.projectPath):
+            bucket_prefix = self.projectPath.replace(self.__localPathForTeacher,'')
+            if(bucket_prefix[0] == '\\' or bucket_prefix[0] == '/'):
+                bucket_prefix = bucket_prefix[1:]
+            MyUtil.deleteByThread(bucket_prefix)
             shutil.rmtree(self.projectPath,ignore_errors=True)
+            return True
+        else:
+            return False
+        
         
     def createTemplateProject(self,treePath=None):
         if(treePath is None):

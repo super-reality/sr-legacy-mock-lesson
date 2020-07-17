@@ -21,6 +21,7 @@ import os
 import json
 from collections import namedtuple
 
+import threading
 import boto3
 
 #################### Get project Tree from current Teacher Lessson folder ##########################
@@ -32,7 +33,6 @@ def path_to_dict(pathDir,childList=[]):
         if os.path.isdir(absPath):
             if isLeaf(absPath):
                 childList.append(os.path.basename(path))
-                
             else:
                 obj = {}
                 obj[os.path.basename(path)] = []
@@ -94,7 +94,7 @@ def convertPathToObj(paths):
     # convertPathToObj(res[key],leafs)
    
 def getDataFromBucket(bucketName=""):
-    return []
+    
     bucketName = Settings.bucketName
     session = boto3.Session(
         aws_access_key_id = Settings.aws_access_key_id,
@@ -108,6 +108,21 @@ def getDataFromBucket(bucketName=""):
         result.append(object.key)
     convertPathToObj(result)
     return result
+
+def deleteByThread(path):
+    th_delete = threading.Thread(target=deleteBucket,args=(path,),daemon=True)
+    th_delete.start()
+    pass
+def deleteBucket(path):
+    bucketName = Settings.bucketName
+    session = boto3.Session(
+        aws_access_key_id = Settings.aws_access_key_id,
+        aws_secret_access_key= Settings.aws_secret_access_key,
+        region_name= Settings.region_name
+    )
+    s3 = session.resource('s3')
+    bucket = s3.Bucket(bucketName)
+    bucket.objects.filter(Prefix=path).delete()
 
 def path_to_dict_s3( pathDir , childList=[] ):
     

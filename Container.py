@@ -467,14 +467,7 @@ class QAnchorDialog(QLabel):
         self.oldPos = event.globalPos()
 
     def __initUI(self):
-        # self.backgroundwidget = QWidget(self)
-        # self.layout = MyVBoxLayout(self)
-        # self.layout.addWidget(self.backgroundwidget)
-        # self.backgroundwidget.setWindowOpacity(0.5)
-        # self.backgroundwidget.setStyleSheet('background-color:red')
-        # self.backgroundwidget.hide()
         self.setAttribute(Qt.WA_TranslucentBackground|Qt.WA_NoSystemBackground)
-        
         pass
     
     def getPixmapAtCurrentPosition(self):
@@ -507,23 +500,21 @@ class QAnchorDialog(QLabel):
         
         #hide temporarily to get image behind of this dialog
         self.hide()
-        pix = getPixmapFromScreen(posx,posy,W,H)
-        self.setPixmap(pix)
-        self.currentPixmap = pix
-        
+        if event is not None:
+            pix = getPixmapFromScreen(posx,posy,W,H)
+            self.setPixmap(pix)
+            self.currentPixmap = pix
         
         #move again to original pos
         self.show()
         self.move(posx + Settings.bias,posy + Settings.bias)
-        self.pixmapChanged.emit()
-
-
-        # self.posxToEmit = event.globalX() - posx
-        # self.posyToEmit = event.globalY() - posy
-
         self.sig_mouseClick.emit(self.posxToEmit,self.posyToEmit)
+        
+        if(event is not None):
 
-        self.captureLastPos()
+            self.pixmapChanged.emit()
+
+            self.captureLastPos()
 
         pass
     

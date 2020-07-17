@@ -439,7 +439,7 @@ class ClickStepItem(MyFrame):
         if(self.anchorDialog.isHidden()):
             self.anchorDialog.show()
         else:
-            self.anchorDialog.mouseDoubleClickEvent(None)
+            self.anchorDialog.mouseDoubleClickEvent(1)
             self.anchorDialog.hide()
         
     def updatePic(self):
@@ -514,7 +514,6 @@ class ClickStepItem(MyFrame):
 
             if(self.anchorposx is not None):
                 self.anchorDialog.mouseDoubleClickEvent(None)
-      
 
     def hideEvent(self,event):
         self.edit_header.hide()
@@ -557,7 +556,6 @@ class ClickStepItem(MyFrame):
             return Settings.clickStep,title,description,sec_description,None,anchorPixmap,self.isChild,None,match_Text,self.anchorDialog.lastPosx,\
             self.anchorDialog.lastPosy,self.anchorDialog.lastWidth,self.anchorDialog.lastHeight,self.anchorchildposx,self.anchorchildposy,self.anchorchildwidth,\
                 self.anchorchildheight
-            pass
         else:
             return Settings.clickStep,title,description,sec_description,None,anchorPixmap,self.isChild,None,match_Text,self.anchorDialog.lastPosx,\
             self.anchorDialog.lastPosy,self.anchorDialog.lastWidth,self.anchorDialog.lastHeight,self.anchorDialog.childAnchor.lastChildPosx,\
@@ -616,9 +614,6 @@ class ClickStepItem(MyFrame):
         self.anchorDialog.childAnchor.lastChildWidth = self.anchorchildwidth
         self.anchorDialog.childAnchor.lastChildHeight = self.anchorchildheight
 
-        print("checmehere1")
-        print(self.anchorDialog.childAnchor.lastChildPosx,self.anchorDialog.childAnchor.lastChildPosy,self.anchorDialog.childAnchor.lastChildWidth,\
-            self.anchorDialog.childAnchor.lastChildHeight)
         
         
     
@@ -1169,8 +1164,8 @@ class TeacherTabWidget(MyContainer):
         pass
 
     def deleteProject(self):
-        Globals.projectmgr.deleteCurrentProject()
-        self.landing_page.tree.refresh()
+        if Globals.projectmgr.deleteCurrentProject():
+            self.landing_page.tree.refresh()
         pass
 
     def searchProject(self):
