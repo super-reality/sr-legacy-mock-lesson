@@ -162,8 +162,10 @@ class Teacher_LookStep_SecondToolBar(MyFrame):
     def __init__(self,parent):
 
         super(Teacher_LookStep_SecondToolBar,self).__init__(parent)
+
         self.isPixmapSelected = False
         self.currentPixmap = None
+
         self.__initUI()
         
 
@@ -173,8 +175,7 @@ class Teacher_LookStep_SecondToolBar(MyFrame):
         self.edit_lesson_title = QLineEdit(self)
         self.edit_lesson_descripiton = MyRichTextDockWidget(None)
         self.edit_lesson_tag = QLineEdit(self)
-        
-        
+                
         # self.validlabel_tag = ValidLabel(self)
         self.bt_picture = PictureButton(self)
         self.bt_video = VideoButton(self)
@@ -191,8 +192,7 @@ class Teacher_LookStep_SecondToolBar(MyFrame):
         self.edit_lesson_descripiton.setFont(QFont('Arial',10))
         self.edit_lesson_title.setFixedHeight(30)
         self.edit_lesson_tag.setFixedHeight(30)
-        
-        
+                
         #add widgets to layout
         gbox.addWidget(self.edit_lesson_title,0,0,1,10)
         gbox.addWidget(self.edit_lesson_descripiton,1,0,5,10)
@@ -207,7 +207,6 @@ class Teacher_LookStep_SecondToolBar(MyFrame):
         self.edit_lesson_descripiton.setPlaceHolderText(Settings.descriptionPlaceholder)
         self.edit_lesson_tag.setPlaceholderText(Settings.tagsPlaceHolder)
         self.anchorDialog.setWindowTitle(Settings.anchorText)
-
         
         #binding event.
         self.bt_picture.clicked.connect(self.uploadPicture)
@@ -236,8 +235,31 @@ class Teacher_LookStep_SecondToolBar(MyFrame):
     def showEvent(self,e):
         # self.anchorDialog.show()
         pass
+
     def hideEvent(self,e):
         self.anchorDialog.hide()
+    
+    def setItemInfo(self,posx,posy,poswidth,posheight,pixmap):
+        
+        if(pixmap is not None):
+            self.lbl_picture.setPixmap(pixmap)
+            self.anchorDialog.currentPixmap = pixmap
+            self.anchorDialog.move(posx,posy)
+            self.anchorDialog.resize(poswidth,posheight)
+            self.anchorDialog.show()
+            self.anchorDialog.mouseDoubleClickEvent(None)
+        else:
+            self.lbl_picture.initLablePixmap()
+            self.anchorDialog = QAnchorDialog(self)
+            self.anchorDialog.pixmapChanged.connect(self.pixmapChanged)
+
+            
+        
+        self.anchorDialog.lastPosx = posx
+        self.anchorDialog.lastPosy = posy
+        self.anchorDialog.lastWidth = poswidth
+        self.anchorDialog.lastHeight = posheight
+        pass
     def uploadPicture(self):
         if(self.anchorDialog.isHidden() == True):
             self.anchorDialog.show()
@@ -261,6 +283,19 @@ class ClickStepItem(MyFrame):
         self.posWidth = None
         self.posHeight = None
         self.currentPixmap = None
+        self.anchorchildposx = None
+        self.anchorchildposy = None
+        self.anchorchildwidth = None
+        self.anchorchildheight = None
+
+        self.anchorposx = None
+        self.anchorposy = None
+        self.anchorwidth = None
+        self.anchorheight = None
+
+
+        self.isFirstShow = True
+
         self.__initUI()
 
         #set style
@@ -400,15 +435,16 @@ class ClickStepItem(MyFrame):
             pass
     
     def process_bt_pic_clicked(self):
+
         if(self.anchorDialog.isHidden()):
             self.anchorDialog.show()
         else:
-            self.anchorDialog.getPixmapAtCurrentPosition()
+            self.anchorDialog.mouseDoubleClickEvent(None)
             self.anchorDialog.hide()
         
     def updatePic(self):
 
-        pixmap = self.anchorDialog.pixmap()
+        pixmap = self.anchorDialog.currentPixmap
         self.currentPixmap = pixmap
         
         if(self.anchorDialog.ClickPointable):
@@ -440,6 +476,7 @@ class ClickStepItem(MyFrame):
         pass
 
     def showEvent(self,event):
+
         self.edit_header.show()
         self.edit_description.show()
         self.lbl_icon.show()
@@ -460,15 +497,35 @@ class ClickStepItem(MyFrame):
 
         super().showEvent(event)
 
+        if(self.isFirstShow == True):
+            self.isFirstShow = False
+            
+            if self.anchorposx is not None:
+                self.anchorDialog.resize(self.anchorwidth,self.anchorheight)
+                self.anchorDialog.move(self.anchorposx,self.anchorposy)
+            
+            if self.posx is not None:
+                self.anchorDialog.ClickPointable = True
+                self.checkbt_clickSpot.setChecked(True)
+                self.anchorDialog.childAnchor.move(self.anchorchildposx,self.anchorchildposy)
+                self.anchorDialog.childAnchor.resize(self.anchorchildwidth,self.anchorchildheight)
+
+            self.anchorDialog.show()
+
+            if(self.anchorposx is not None):
+                self.anchorDialog.mouseDoubleClickEvent(None)
+      
+
     def hideEvent(self,event):
         self.edit_header.hide()
         self.lbl_icon.hide()
         self.edit_description.hide()
         self.lbl_prefix.hide()
-        self.bt_pic.hide()
-        self.bt_video.hide()
-        self.bt_newfolder.hide()
-        self.bt_attach.hide()
+        # self.bt_pic.hide()
+        # self.bt_video.hide()
+        # self.bt_newfolder.hide()
+        # self.bt_attach.hide()
+        self.row_snapshot.hide()
         self.lbl_uploadImg.hide()
         self.row_clickspot.hide()
         self.row_imageRec.hide()
@@ -490,28 +547,80 @@ class ClickStepItem(MyFrame):
     def getDatas(self):
         title = self.edit_header.toPlainText()
         description = self.edit_description.toPlainText()
-        anchorPixmap = self.anchorDialog.pixmap()
+        anchorPixmap = self.anchorDialog.currentPixmap
         sec_description = self.edit_sec_description.toPlainText()
         match_Text = self.edit_TextMatch.toPlainText()
-        return Settings.clickStep,title,description,sec_description,None,anchorPixmap,self.isChild,None,match_Text
+
+        if(self.isFirstShow == True):
+            print("checmehere2")
+            print(self.anchorchildposx,self.anchorchildposy,self.anchorchildwidth,self.anchorchildheight)
+            return Settings.clickStep,title,description,sec_description,None,anchorPixmap,self.isChild,None,match_Text,self.anchorDialog.lastPosx,\
+            self.anchorDialog.lastPosy,self.anchorDialog.lastWidth,self.anchorDialog.lastHeight,self.anchorchildposx,self.anchorchildposy,self.anchorchildwidth,\
+                self.anchorchildheight
+            pass
+        else:
+            return Settings.clickStep,title,description,sec_description,None,anchorPixmap,self.isChild,None,match_Text,self.anchorDialog.lastPosx,\
+            self.anchorDialog.lastPosy,self.anchorDialog.lastWidth,self.anchorDialog.lastHeight,self.anchorDialog.childAnchor.lastChildPosx,\
+                self.anchorDialog.childAnchor.lastChildPosy,self.anchorDialog.childAnchor.lastChildWidth,self.anchorDialog.childAnchor.lastChildHeight
 
     def setItemInfos(self,title,description,sec_description,isChild,spotposx,spotposy,spotwidth,spotheight,anchorPixmap,*kwargs):
         
         self.edit_header.setText(title)
         self.edit_description.setText(description)
         self.edit_sec_description.setText(sec_description)
-        if(kwargs is not None):
-            self.edit_TextMatch.setText(kwargs[0])
-            
-        self.isChild = isChild
         self.posx = spotposx
         self.posy = spotposy
         self.posWidth = spotwidth
         self.posHeight = spotheight
+        
+        if(kwargs is not None):
+
+            self.edit_TextMatch.setText(kwargs[0])
+
+            if len(kwargs)>7:
+                self.anchorposx = kwargs[1]
+                self.anchorposy = kwargs[2]
+                self.anchorwidth = kwargs[3]
+                self.anchorheight = kwargs[4]
+                self.anchorchildposx = kwargs[5]
+                self.anchorchildposy = kwargs[6]
+                self.anchorchildwidth = kwargs[7]
+                self.anchorchildheight = kwargs[8]
+            else:
+                self.anchorposx = None
+                self.anchorposy = None
+                self.anchorwidth = None
+                self.anchorheight = None
+                self.anchorchildposx = None
+                self.anchorchildposy = None
+                self.anchorchildwidth = None
+                self.anchorchildheight = None
+
+
+        self.isChild = isChild
+        
         if(anchorPixmap is not None):
             path = os.path.join(Globals.projectmgr.projectPath,anchorPixmap)
             self.lbl_uploadImg.setPixmap(QPixmap(path))
-        pass
+            self.anchorDialog.currentPixmap = QPixmap(path)
+            self.anchorDialog.setPixmap(QPixmap(path))
+
+        #init lastposx
+        self.anchorDialog.lastPosx = self.anchorposx
+        self.anchorDialog.lastPosy = self.anchorposy
+        self.anchorDialog.lastWidth = self.anchorwidth
+        self.anchorDialog.lastHeight = self.anchorheight
+
+        self.anchorDialog.childAnchor.lastChildPosx = self.anchorchildposx
+        self.anchorDialog.childAnchor.lastChildPosy = self.anchorchildposy
+        self.anchorDialog.childAnchor.lastChildWidth = self.anchorchildwidth
+        self.anchorDialog.childAnchor.lastChildHeight = self.anchorchildheight
+
+        print("checmehere1")
+        print(self.anchorDialog.childAnchor.lastChildPosx,self.anchorDialog.childAnchor.lastChildPosy,self.anchorDialog.childAnchor.lastChildWidth,\
+            self.anchorDialog.childAnchor.lastChildHeight)
+        
+        
     
 class MyListWidget(QWidget):
     
@@ -664,6 +773,7 @@ class TeacherLandingPage(MyContainer):
 
 class TeacherNewLessionPage(MyContainer):
     procDone = pyqtSignal(str)
+    
     def __init__(self,parent):
 
         super(TeacherNewLessionPage,self).__init__(parent)
@@ -712,7 +822,8 @@ class TeacherNewLessionPage(MyContainer):
         #hide lessonwidget and anchordialgo
         if(self.newLessonbar.listWidget.currentItem is not None):
             self.newLessonbar.listWidget.currentItem.anchorDialog.hide()
-        pass    
+        pass
+
     def pixmapChanged(self):
         self.newLessonbar.lbl_icon.setPixmap(self.Secondtoolbar.anchorDialog.pixmap())
 
@@ -727,6 +838,7 @@ class TeacherNewLessionPage(MyContainer):
         pass
     
     def addItem(self,itemtype):
+
         if(itemtype == 'attach'):
             self.newLessonbar.listWidget.insertItem(None)
             pass
@@ -779,18 +891,17 @@ class TeacherNewLessionPage(MyContainer):
             return Settings.stepError
         return Settings.valid
     
-
     def gotoNewLessonPage(self,event):
         
-        if(self.currentProjectPath != Globals.projectmgr.projectPath and Globals.projectmgr.projectPath is not None):
-            self.clearAllListItems()
+        # if(self.currentProjectPath != Globals.projectmgr.projectPath and Globals.projectmgr.projectPath is not None):
 
-            if self.LoadCurrentProject():
-                #emit signal
-                logging.info("loading current project..")
-                pass
-            else:
-                return False
+        self.clearAllListItems()
+        if self.LoadCurrentProject():
+            #emit signal
+            logging.info("loading current project..")
+            pass
+        else:
+            return False
         if(MyUtil.isLeaf(self.currentProjectPath) == False):
             return False
 
@@ -810,7 +921,12 @@ class TeacherNewLessionPage(MyContainer):
         self.newLessonbar.listWidget.clear()
 
     def LoadCurrentProject(self):
+
         self.currentProjectPath = Globals.projectmgr.projectPath
+        
+        print("project is createend here",self.currentProjectPath)
+
+
         if(MyUtil.isLeaf(self.currentProjectPath)):
             pass
         else:
@@ -827,11 +943,18 @@ class TeacherNewLessionPage(MyContainer):
         self.Secondtoolbar.edit_lesson_descripiton.setText(self.data.header.description)
         self.Secondtoolbar.edit_lesson_tag.setText(self.data.header.tags)
         
-
         if(self.data.header.anchorImageName is not None):
-            self.Secondtoolbar.lbl_picture.setPixmap(QPixmap(os.path.join(Globals.projectmgr.projectPath,self.data.header.anchorImageName)))
+            pixmap = QPixmap(os.path.join(Globals.projectmgr.projectPath,self.data.header.anchorImageName))
         else:
-            self.Secondtoolbar.lbl_picture.initLablePixmap()
+            pixmap = None
+        try:
+            param = self.data.header.anchorposx,self.data.header.anchorposy,self.data.header.anchorwidth,self.data.header.anchorheight,pixmap
+            self.Secondtoolbar.setItemInfo(*param)
+            pass
+        except:
+            param = None,None,None,None,pixmap
+            self.Secondtoolbar.setItemInfo(*param)
+            pass
         
         self.itemList = []
         for idx in range(len(self.data.lessons)):
@@ -841,8 +964,31 @@ class TeacherNewLessionPage(MyContainer):
 
                 curInfo = self.data.lessons[idx]
                 item = ClickStepItem(self)
-                item.setItemInfos(curInfo.title,curInfo.description,curInfo.sec_description,curInfo.isChild,curInfo.spotposx,curInfo.spotposy,curInfo.spotwidth,curInfo.spotheight,\
-                    curInfo.anchorPixmap,curInfo.matchText)
+                try:
+                    anchorposx = curInfo.anchorposx
+                    anchorposy = curInfo.anchorposy
+                    anchorwidth = curInfo.anchorwidth
+                    anchorheight = curInfo.anchorheight
+                    anchorchildposx = curInfo.anchorchildposx
+                    anchorchildposy = curInfo.anchorchildposy
+                    anchorchildwidth = curInfo.anchorchildwidth
+                    anchorchildheight = curInfo.anchorchildheight
+                except:
+                    anchorposx = None
+                    anchorposy = None
+                    anchorwidth = None
+                    anchorheight = None
+                    anchorchildposx = None
+                    anchorchildposy = None
+                    anchorchildwidth = None
+                    anchorchildheight = None
+                    pass
+
+                item.setItemInfos(curInfo.title,curInfo.description,curInfo.sec_description,curInfo.isChild,curInfo.spotposx,\
+                curInfo.spotposy,curInfo.spotwidth,curInfo.spotheight,\
+                    curInfo.anchorPixmap,curInfo.matchText,anchorposx,anchorposy,anchorwidth,anchorheight,anchorchildposx,\
+                        anchorchildposy,anchorchildwidth,anchorchildheight)
+
                 self.addItemInstance(item)
                 item.hide()
                 pass
@@ -998,8 +1144,11 @@ class TeacherTabWidget(MyContainer):
         
         self.gotoLooksteppage(param=Settings.gotoLessson)
         pass
+    
     def createNewProject(self):
-        name, done1 = QInputDialog.getText(self, 'Input Dialog', 'Enter your project name:')
+
+        name, done1 =  Settings.templateFolder, True #QInputDialog.getText(self, 'Input Dialog', 'Enter your project name:')#check me here this is uneccessary
+
         if(done1):
             path = None
             if(MyUtil.isLeaf(Globals.projectmgr.getAbsCurrentProjectPath())):
@@ -1007,11 +1156,10 @@ class TeacherTabWidget(MyContainer):
             else:
                 path = Globals.projectmgr.getAbsCurrentProjectPath()
             try:
-
                 path = os.path.join(path,name)
                 Globals.projectmgr.createTemplateProject(path)
                 Globals.projectmgr.projectPath = path
-
+                logging.info(path + " creating project...")
                 #create project directory and projecty main file
                 self.gotoLooksteppage()
             except:
@@ -1019,7 +1167,6 @@ class TeacherTabWidget(MyContainer):
         else:
             pass
         pass
-  
 
     def deleteProject(self):
         Globals.projectmgr.deleteCurrentProject()
@@ -1074,7 +1221,12 @@ class TeacherTabWidget(MyContainer):
             self.sig_saveCurrentProject.emit("")
             pass
         else:
-            pass
+            #delete template project
+            if Settings.templateFolder in Globals.projectmgr.projectPath:
+                shutil.rmtree(Globals.projectmgr.projectPath)
+            else:
+                pass
+
         self.currentWidget = self.landing_page
         self.hideAllButCurrent()
         self.landing_page.tree.refresh()

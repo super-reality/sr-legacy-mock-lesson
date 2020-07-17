@@ -56,8 +56,10 @@ class LocalProjectMgrVersion1:
         
     def getStudentProjectsLocalPath(self):
         return self.__localPathForStudent
+    
     def getTeacherProjectsLocalPath(self):
         return self.__localPathForTeacher
+    
     def __createDir(self):
 
         if not os.path.exists(self.__localPathForTeacher):
@@ -89,14 +91,13 @@ class LocalProjectMgrVersion1:
             pass
         pass
 
-    def createProject(self,projectName=None,title='title',description='description',tags=None,referPixmap=None,anchorPixmap=None):
+    def createProject(self,projectName=None,title='title',description='description',tags=None,referPixmap=None,anchorPixmap=None,anchorPosx=None,anchorPosy=None,anchorWidth=None,anchorHeight=None):
         
         """
         create project dir named by projectName in projects folder
         if it is successfully created, then return True, else return error text
         """
-        
-        
+
         if(self.projectPath is None):
             logging.info("project Path is not defined")
             return Settings.projectNameNotSpecified
@@ -125,7 +126,7 @@ class LocalProjectMgrVersion1:
 
         imageName = None
         anchorImageName = None
-        
+        logging.info(self.projectPath + " in here All files are being saved")
         try:
             filename,filepath = self.getFileNameTobeCreated()
             
@@ -148,6 +149,10 @@ class LocalProjectMgrVersion1:
         self.json['header']['tags'] = tags
         self.json['header']['imageName'] = imageName
         self.json['header']['anchorImageName'] = anchorImageName
+        self.json['header']['anchorposx'] = anchorPosx
+        self.json['header']['anchorposy'] = anchorPosy
+        self.json['header']['anchorwidth'] = anchorWidth
+        self.json['header']['anchorheight'] = anchorHeight
         
         return True
 
@@ -197,7 +202,9 @@ class LocalProjectMgrVersion1:
         self.posHeight = height
         self.posWidth = width
 
-    def createStep(self,stepType=None,title='',description='',sec_description='',uploadPixmap=None,anchorPixmap=None,isChild=False,mouseState=None,matchText=None):
+    def createStep(self,stepType=None,title='',description='',sec_description='',uploadPixmap=None,anchorPixmap=None,isChild=False,mouseState=None,matchText=None,\
+        anchorPosx=None,anchorPosy=None,anchorWidth=None,anchorHeight=None\
+        ,anchorChildPosx=None,anchorChildPosy=None,anchorChildWidth=None,anchorChildHeight=None):
         
         """
         create step. if success, return true else return error string
@@ -238,6 +245,14 @@ class LocalProjectMgrVersion1:
             obj['spotheight'] = self.posHeight
             obj['anchorPixmap'] = anchorPixmapName
             obj['matchText'] = matchText
+            obj['anchorposx'] = anchorPosx
+            obj['anchorposy'] = anchorPosy
+            obj['anchorwidth'] = anchorWidth
+            obj['anchorheight'] = anchorHeight
+            obj['anchorchildposx'] = anchorChildPosx
+            obj['anchorchildposy'] = anchorChildPosy
+            obj['anchorchildwidth'] = anchorChildWidth
+            obj['anchorchildheight'] = anchorChildHeight
             pass
         elif(stepType == Settings.matchStep):
             obj['type'] = stepType
@@ -276,7 +291,14 @@ class LocalProjectMgrVersion1:
     def saveLocalProject(self):
         
         path = os.path.join(self.projectPath,Settings.projectFileName)
-        with open(path, 'w') as outfile:
+        
+        parent_dir = os.path.dirname(path)
+        
+        if(os.path.exists(parent_dir)) == False:
+            os.mkdir(parent_dir)
+            pass
+
+        with open(path, 'w+') as outfile:
             json.dump(self.json, outfile)
         
     def downLoadProjectsFromRemote(self):
@@ -303,8 +325,8 @@ class LocalProjectMgr(LocalProjectMgrVersion1):
     def __init__(self):
         super(LocalProjectMgr,self).__init__()
     
-    def createProject(self,projectName=None,title='title',description='description',tags=None,referPixmap=None,anchorPixmap=None):
-        result = super(LocalProjectMgr,self).createProject(projectName=projectName,title=title,description=description,tags=tags,referPixmap=referPixmap,anchorPixmap=anchorPixmap)
+    def createProject(self,projectName=None,title='title',description='description',tags=None,referPixmap=None,anchorPixmap=None,anchorPosx=None,anchorPosy=None,anchorWidth=None,anchorHeight=None):
+        result = super(LocalProjectMgr,self).createProject(projectName=projectName,title=title,description=description,tags=tags,referPixmap=referPixmap,anchorPixmap=anchorPixmap,anchorPosx=anchorPosx,anchorPosy=anchorPosy,anchorWidth=anchorWidth,anchorHeight=anchorHeight)
         return result
 
 

@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QDi
 QAction, QTabWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QFrame,QLabel,QSlider,QScrollArea,QCheckBox,QSizePolicy,QFileDialog,QDockWidget,\
      QDialog,QTextEdit,QSizeGrip,QToolButton,QGraphicsOpacityEffect,QProgressBar,QTreeWidget,QTreeWidgetItem,QAbstractItemView,QAbstractScrollArea
 from PyQt5 import QtWidgets
-from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPaintDevice,QPainter,QPen,QColor
+from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPaintDevice,QPainter,QPen,QColor,QMouseEvent
 from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent,QTimer,QPoint,pyqtSignal,QRect
 from Setting import Settings
 from Mybutton import TitleButton,CloseButton
@@ -219,7 +219,7 @@ class MySizeGrip(CommonFramelessWidget):
             self.showEvent(None)
         pass
     def showEvent(self,event):
-
+        
         self.changeGripSize()
         # move this widget to parent's corner
         parentpos = self.parentWidget().mapToGlobal(QPoint(0,0)).x(),self.parentWidget().mapToGlobal(QPoint(0,0)).y()
@@ -233,8 +233,7 @@ class MySizeGrip(CommonFramelessWidget):
             self.move(parentpos[0]-Settings.gripSize//2,parentpos[1] - Settings.gripSize//2 + parentWidgetSize[1])
         if(self.position == Settings.bottomright):
             self.move(parentpos[0] + parentWidgetSize[0] - Settings.gripSize//2,parentpos[1] - Settings.gripSize//2 + parentWidgetSize[1])
-
-
+        
         self.oldpos = self.mapToGlobal(QPoint(0,0)).x(),self.mapToGlobal(QPoint(0,0)).y()
 
     def moveEvent(self,event):
@@ -314,13 +313,16 @@ class MyChildAnchorWidget(CommonFramelessWidget):
         self.bottomrightgrip.setLimitParent(self.parentWidget())
 
 
-        self.topleftgrip
-
         #bind events
         self.sig_moveResizeEvent.connect(self.topleftgrip.processParentPositionChangeEvent)
         self.sig_moveResizeEvent.connect(self.toprightgrip.processParentPositionChangeEvent)
         self.sig_moveResizeEvent.connect(self.bottomleftgrip.processParentPositionChangeEvent)
         self.sig_moveResizeEvent.connect(self.bottomrightgrip.processParentPositionChangeEvent)
+
+        self.lastChildPosx = None
+        self.lastChildPosy = None
+        self.lastChildWidth = None
+        self.lastChildHeight = None
 
 
     def processParentMoveEvent(self,deltax,deltay):
@@ -345,16 +347,19 @@ class MyChildAnchorWidget(CommonFramelessWidget):
         self.toprightgrip.hide()
         self.bottomleftgrip.hide()
         self.bottomrightgrip.hide()
+        self.lastChildPosx = self.mapToGlobal(QPoint(0,0)).x()
+        self.lastChildPosy = self.mapToGlobal(QPoint(0,0)).y()
+        self.lastChildWidth = self.width()
+        self.lastChildHeight = self.height()
 
     def moveEvent(self,event):
-
+        
         parentPosx = self.parentWidget().mapToGlobal(QPoint(0,0)).x()
         parentPosy = self.parentWidget().mapToGlobal(QPoint(0,0)).y()
         parentWidth = self.parentWidget().width()
         parentHeight = self.parentWidget().height()
         
         currentPosx = self.mapToGlobal(QPoint(0,0)).x()
-        
         currentPosy = self.mapToGlobal(QPoint(0,0)).y()
         currentWidth = self.width()
         currentHeight = self.height()
@@ -395,9 +400,11 @@ class MyChildAnchorWidget(CommonFramelessWidget):
 
 
 class QAnchorDialog(QLabel):
+    
     pixmapChanged = pyqtSignal()
     sig_mouseClick = pyqtSignal(int,int)
     sig_moveResizeEvent = pyqtSignal(int,int)
+
     def __init__(self,parent):
         super(QAnchorDialog,self).__init__(parent)
         #set corner's sizeGrip Objects
@@ -406,7 +413,7 @@ class QAnchorDialog(QLabel):
         self.bottomrightgrip =MySizeGrip(self,position=Settings.bottomleft)
         self.bottomleftgrip =MySizeGrip(self,position=Settings.bottomright)
         self.childAnchor = MyChildAnchorWidget(self)
-        self.resize(300,200)
+        self.resize(Settings.anchorDefaultWidth,Settings.anchorDefaultHeight)
         
         self.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
 
@@ -420,7 +427,12 @@ class QAnchorDialog(QLabel):
         self.posWidthToEmit = None
         self.posHeightToEmit = None
         self.currentPixmap = None
+        self.lastPosx = None
+        self.lastPosy = None
+        self.lastWidth = None
+        self.lastHeight = None
         
+
         #set object name for style
         self.setObjectName("AnchorDlg")
         self.setStyleSheet('#AnchorDlg{border:2px solid black; border-style:dashed;background-color:#00deff}')
@@ -435,6 +447,7 @@ class QAnchorDialog(QLabel):
         self.sig_moveResizeEvent.connect(self.bottomleftgrip.processParentPositionChangeEvent)
         self.sig_moveResizeEvent.connect(self.bottomrightgrip.processParentPositionChangeEvent)
         self.sig_moveResizeEvent.connect(self.childAnchor.processParentMoveEvent)
+        
         
     def hideAllChild(self,ishide=True):
         if(ishide):
@@ -479,9 +492,11 @@ class QAnchorDialog(QLabel):
         self.hide()
         pix = getPixmapFromScreen(posx,posy,W,H)
         self.setPixmap(pix)
+        self.currentPixmap = pix
 
         #move again to original pos
         self.pixmapChanged.emit()
+        self.captureLastPos()
 
     def mouseDoubleClickEvent(self,event):
 
@@ -502,10 +517,13 @@ class QAnchorDialog(QLabel):
         self.move(posx + Settings.bias,posy + Settings.bias)
         self.pixmapChanged.emit()
 
+
         # self.posxToEmit = event.globalX() - posx
         # self.posyToEmit = event.globalY() - posy
 
         self.sig_mouseClick.emit(self.posxToEmit,self.posyToEmit)
+
+        self.captureLastPos()
 
         pass
     
@@ -513,6 +531,7 @@ class QAnchorDialog(QLabel):
         pass
 
     def mouseMoveEvent(self,e):
+        
         delta = QPoint (e.globalPos() - self.oldPos)
         self.move(self.x() + delta.x(), self.y() + delta.y())
         self.oldPos = e.globalPos()
@@ -549,12 +568,22 @@ class QAnchorDialog(QLabel):
         pass
 
     def hideEvent(self,e):
+
         self.topleftgrip.hide()
         self.toprightgrip.hide()
         self.bottomrightgrip.hide()
         self.bottomleftgrip.hide()
         if self.ClickPointable == True:
             self.childAnchor.hide()
+
+        
+
+    def captureLastPos(self):
+        # save last click point
+        self.lastPosx = self.mapToGlobal(QPoint(0,0)).x()
+        self.lastPosy = self.mapToGlobal(QPoint(0,0)).y()
+        self.lastWidth = self.width()
+        self.lastHeight = self.height()
 
     def mouseReleaseEvent(self,event):
         #if anchor is out of screen, then let it go into inside of screen
@@ -579,6 +608,7 @@ class QAnchorDialog(QLabel):
         self.posHeightToEmit = posheight
         self.update()
         pass
+
     def paintEvent(self,event):
         #just keep pixmap but don't show it but background
         painter = QPainter(self)
@@ -1110,8 +1140,13 @@ class MyTree(QTreeWidget):
             event.ignore()
 
     def mouseDoubleClickEvent(self,event):
-        self.sig_doubleclick.emit(self.currentItem().getPath())
+        
+        if(self.currentItem() is not None):
+            self.sig_doubleclick.emit(self.currentItem().getPath())
+            pass
+        
         super(MyTree,self).mouseDoubleClickEvent(event)
+        
         pass
 
 

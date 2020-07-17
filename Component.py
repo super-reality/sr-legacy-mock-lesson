@@ -74,7 +74,7 @@ class MyTableWidget(QWidget):
 
         #if path not exist , then download it first
         if os.path.exists(path) == False:
-            self.sig_bt_signal()
+            self.sig_bt_signal_copy()
             pass
 
         if MyUtil.isLeaf(path):
@@ -133,6 +133,10 @@ class MyTableWidget(QWidget):
         pass
     
     def sig_bt_signal(self):
+        self.refreshProjectList()
+        pass
+
+    def sig_bt_signal_copy(self):
         self.relativePath = self.tab_student.getCurrentPath()
         if(self.relativePath is None):
             self.refreshProjectList()
@@ -177,19 +181,19 @@ class MyTableWidget(QWidget):
         description = self.tab_teacher.lookstep_page.Secondtoolbar.edit_lesson_descripiton.getText()
         tags = self.tab_teacher.lookstep_page.Secondtoolbar.edit_lesson_tag.text()
         pixmapRefer = self.tab_teacher.lookstep_page.Secondtoolbar.lbl_picture.pixmap()
-        pixmapAnchor = self.tab_teacher.lookstep_page.Secondtoolbar.anchorDialog.pixmap()
-        if(self.tab_teacher.lookstep_page.Secondtoolbar.isPixmapSelected):
-            pass
-        else:
-            pixmapRefer = None
-            pixmapAnchor = None
+        pixmapAnchor = self.tab_teacher.lookstep_page.Secondtoolbar.anchorDialog.currentPixmap
+        anchorPosx = self.tab_teacher.lookstep_page.Secondtoolbar.anchorDialog.lastPosx
+        anchorPosy = self.tab_teacher.lookstep_page.Secondtoolbar.anchorDialog.lastPosy
+        anchorWidth = self.tab_teacher.lookstep_page.Secondtoolbar.anchorDialog.lastWidth
+        anchorHeight = self.tab_teacher.lookstep_page.Secondtoolbar.anchorDialog.lastHeight
+
         try:
-            resp = self.projectmgr.createProject(projectName,title,description,tags,pixmapRefer,pixmapAnchor)
+            resp = self.projectmgr.createProject(projectName,title,description,tags,pixmapRefer,pixmapAnchor, anchorPosx,anchorPosy,anchorWidth,anchorHeight)
             if(resp == Settings.projectAlreadyExist):
                 # dlg_resp = CustomDialog.showStandardMsgbox(self.window(),Settings.projectAlreadyExistErrorText)
                 self.projectmgr.deleteCurrentProject()
                 logging.info("delete current Project "+ self.projectmgr.projectPath + " recreating project")
-                self.projectmgr.createProject(projectName,title,description,tags,pixmapRefer,pixmapAnchor)
+                self.projectmgr.createProject(projectName,title,description,tags,pixmapRefer,pixmapAnchor, anchorPosx,anchorPosy,anchorWidth,anchorHeight)
 
             elif(resp == Settings.projectNameNotSpecified):
                 return False
@@ -215,6 +219,7 @@ class MyTableWidget(QWidget):
                     params = item.getDatas()
                     if(item.anchorDialog is not None):
                         item.anchorDialog.hide()
+                    
                     self.projectmgr.setClickArea(item.posx,item.posy,item.posWidth,item.posHeight)
                     self.projectmgr.createStep(*params)
                     #create clickstep
@@ -245,7 +250,8 @@ class MyTableWidget(QWidget):
         except:
             logging.exception(Settings.projectStepCreationError)
             return False
-            
+
+
         #save project and exit
         
         self.projectmgr.saveLocalProject()

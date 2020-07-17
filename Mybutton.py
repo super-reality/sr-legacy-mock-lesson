@@ -341,3 +341,5 @@ class MyComboBox(QComboBox):
         pass
     def __initUI(self):
         pass
+    def wheelEvent(self,event):
+        event.ignore()
