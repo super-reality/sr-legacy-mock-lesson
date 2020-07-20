@@ -3,6 +3,8 @@ dist/*
 ProjectsForStudent/*
 ProjectsForTeacher/*
 Tesseract-OCR/*
+Real-Time-Voice-Cloning/*
+TTS/*
 
 Setting.py
 test.json
