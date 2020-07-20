@@ -94,7 +94,7 @@ def convertPathToObj(paths):
     # convertPathToObj(res[key],leafs)
    
 def getDataFromBucket(bucketName=""):
-    
+    # return []
     bucketName = Settings.bucketName
     session = boto3.Session(
         aws_access_key_id = Settings.aws_access_key_id,

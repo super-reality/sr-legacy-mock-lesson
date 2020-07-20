@@ -247,7 +247,7 @@ class Teacher_LookStep_SecondToolBar(MyFrame):
             self.anchorDialog.move(posx,posy)
             self.anchorDialog.resize(poswidth,posheight)
             self.anchorDialog.show()
-            self.anchorDialog.mouseDoubleClickEvent(None)
+            self.anchorDialog.reLocating()
         else:
             self.lbl_picture.initLablePixmap()
             self.anchorDialog = QAnchorDialog(self)
@@ -513,7 +513,7 @@ class ClickStepItem(MyFrame):
             self.anchorDialog.show()
 
             if(self.anchorposx is not None):
-                self.anchorDialog.mouseDoubleClickEvent(None)
+                self.anchorDialog.reLocating()
 
     def hideEvent(self,event):
         self.edit_header.hide()
@@ -551,8 +551,6 @@ class ClickStepItem(MyFrame):
         match_Text = self.edit_TextMatch.toPlainText()
 
         if(self.isFirstShow == True):
-            print("checmehere2")
-            print(self.anchorchildposx,self.anchorchildposy,self.anchorchildwidth,self.anchorchildheight)
             return Settings.clickStep,title,description,sec_description,None,anchorPixmap,self.isChild,None,match_Text,self.anchorDialog.lastPosx,\
             self.anchorDialog.lastPosy,self.anchorDialog.lastWidth,self.anchorDialog.lastHeight,self.anchorchildposx,self.anchorchildposy,self.anchorchildwidth,\
                 self.anchorchildheight
@@ -918,10 +916,6 @@ class TeacherNewLessionPage(MyContainer):
     def LoadCurrentProject(self):
 
         self.currentProjectPath = Globals.projectmgr.projectPath
-        
-        print("project is createend here",self.currentProjectPath)
-
-
         if(MyUtil.isLeaf(self.currentProjectPath)):
             pass
         else:

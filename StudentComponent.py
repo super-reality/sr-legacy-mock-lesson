@@ -124,6 +124,7 @@ class CommonLessonItem(MyFrame):
             self.lbl_uploadImg.setClickableArea(self.posx,self.posy,self.posWidth,self.posHeight)
         else:
             pass
+
     def display(self,isminimized=False):
 
         if(isminimized):
@@ -141,7 +142,6 @@ class CommonLessonItem(MyFrame):
             else:
                 self.lbl_uploadImg.hide()
     
-
     def setInfo(self,title,description,iconPath,anchorUrl=None):
         self.lbl_title.setText(title)
         self.lbl_description.setText(description)
@@ -187,10 +187,10 @@ class CommonLessonClickStepItem(CommonLessonItem):
 
     sig_ImageClicked = pyqtSignal()
     sig_showed = pyqtSignal()
+
     def __init__(self,parent):
         super(CommonLessonClickStepItem,self).__init__(parent)
         #change image component with new one
-
 
         self.isFirstShow = True
         self.matchText = None
@@ -204,6 +204,8 @@ class CommonLessonClickStepItem(CommonLessonItem):
         self.lbl_uploadImg.sig_mousePress.connect(self.processTextMatch)
         self.sig_check_bt_showTestBoxStateChanged.connect(self.check_bt_showTestBoxChanged)
         self.anchorDiaglog.pixmapChanged.connect(self.processchangedPixmap)
+        if(self.lbl_uploadImg is not None):
+            self.lbl_uploadImg.mousePressEvent = self.processMatchEvent
 
     def hideEvent(self,event):
         self.anchorDiaglog.hide()
@@ -220,27 +222,22 @@ class CommonLessonClickStepItem(CommonLessonItem):
         self.anchorDiaglog.rects = rects.copy()
         self.anchorDiaglog.update()
         
-
     def check_bt_showTestBoxChanged(self,event):
         
         if(event):
             self.isCheckedTestbox = True
         else:
             self.isCheckedTestbox = False
-            self.anchorDiaglog.hide()
-                
-        
-        
+            self.anchorDiaglog.hide()  
+    
     def processTextMatch(self):
         
         if(self.isCheckedTestbox == True):
             self.anchorDiaglog.setClickPoint(False)
             self.anchorDiaglog.show()
-            
         else:
             self.anchorDiaglog.hide()
             pass
-
 
     def __initUI(self):
 
@@ -353,8 +350,6 @@ class StudentBodyWidget(MyContainer):
         self.nestedItems = []
         self.currentAnchorPixmapUrl = None
         
-        
-
         #set timer
         self.timer = QTimer(self)
         self.timer.setInterval(1000)
@@ -364,7 +359,8 @@ class StudentBodyWidget(MyContainer):
 
         self.anchorDlg = QAnchorDialog(self)
         self.anchorDlg.setWindowFlags(Qt.FramelessWindowHint|Qt.Dialog)
-        
+        self.anchorDlg.setMovable(False)
+
         #event binding
         self.window().moveEvent = self.processMoveEvent
         # self.initializeObject(path)
@@ -479,7 +475,6 @@ class StudentBodyWidget(MyContainer):
     def loadData(self,projectfilePath):
 
         self.data = loadData(projectfilePath)
-                
 
     def __initUI(self):
         
@@ -499,7 +494,6 @@ class StudentBodyWidget(MyContainer):
         if(self.layout is None):
             self.layout = MyVBoxLayout(self)
         self.layout.addWidget(self.itemHeader)
-        # self.prevItem.hide()
 
 
         self.itemList = []
@@ -626,7 +620,6 @@ class StudentBodyWidget(MyContainer):
         pass
 
     def showEvent(self,event):
-        # self.moveNextItem()
         if(self.itemHeader is not None):
             self.itemHeader.show()
         pass
@@ -655,18 +648,18 @@ class StudentBodyWidget(MyContainer):
             self.setNextItemFloating(True)
             self.hideAllNextAndNestedItems(False)
             pass
-
-        elif(event.type() == QEvent.MouseButtonPress and source == self.nextItem):
-            #process press event in next item
+        # elif(event.type() == QEvent.MouseButtonPress and source == self.nextItem):
+        #     #process press event in next item
+        #     self.currentItem.hide()
+        #     self.setNextItemFloating(False)
+        #     self.currentItem = self.nextItem
+        #     self.currentItemChanged()
+        elif(event.type() == QEvent.MouseButtonPress and source == self.nextArrowWidget):
+            if(self.nextItem is None):
+                return super(StudentBodyWidget,self).eventFilter(source,event)
             self.currentItem.hide()
-            self.setNextItemFloating(False)
             self.currentItem = self.nextItem
             self.currentItemChanged()
-        elif(event.type() == QEvent.MouseButtonPress and source == self.nextArrowWidget):
-            
-            self.currentItem.hide()
-            self.currentItem = self.nextItem
-            self.currentItemChanged()            
         elif(event.type() == QEvent.MouseButtonPress and self.nestedItems is not None):
             #process press event in nested item
             if(source in self.nestedItems):
@@ -674,23 +667,25 @@ class StudentBodyWidget(MyContainer):
                 pass
             else:
                 pass
-        # elif(event.type() == QEvent.Show and source == self.currentItem):
-        #     self.movePrevItem()
-        #     self.moveNextItem()
-        #     pass
+        elif(event.type() == QEvent.Show and source == self.currentItem):
+            self.movePrevItem()
+            self.moveNextItem()
+            pass
         else:
             pass
         return super(StudentBodyWidget,self).eventFilter(source,event)
 
     def movePrevItem(self):
-        self.prevItem.setSize(self.prevItem.width(),self.currentItem.lbl_icon.sizeHint().height()+Settings.commonRowHeightChild)
-        self.prevItem.show()
+        self.prevItem.setSize(self.prevItem.width(),self.currentItem.lbl_icon.height()+self.currentItem.lbl_description.height() + Settings.arrowwidgetCalibrate)
+        # self.prevItem.setSize(self.prevItem.width(),self.currentItem.lbl_icon.sizeHint().height()+Settings.commonRowHeightChild)
         self.prevItem.move(self.mapToGlobal(QPoint(0,0))-QPoint(self.prevItem.width(),-Settings.delta))
-
+        self.prevItem.show()
+      
     def moveNextItem(self):
-        
-        self.nextArrowWidget.setSize(self.nextArrowWidget.width(),self.currentItem.lbl_icon.sizeHint().height()+Settings.commonRowHeightChild)
+        self.nextArrowWidget.setSize(self.nextArrowWidget.width(),self.currentItem.lbl_icon.height()+self.currentItem.lbl_description.height() + Settings.arrowwidgetCalibrate)
+        # self.nextArrowWidget.setSize(self.nextArrowWidget.width(),self.currentItem.lbl_icon.sizeHint().height()+Settings.commonRowHeightChild)
         self.nextArrowWidget.move(self.mapToGlobal(QPoint(0,0)) + QPoint(self.window().width() - self.nextArrowWidget.width()//2,Settings.delta))
+        self.nextArrowWidget.show()
 
     def play(self,event):
         if(self.itemHeader is not None):
@@ -722,11 +717,12 @@ class StudentBodyWidget(MyContainer):
             self.nextArrowWidget.hide()
         for item in self.nestedItems:
             item.hide()
-        
+
     def currentItemChanged(self):
         
         #hide all nested items and next item
         self.hideAllNextAndNestedItems(True)
+        self.currentItem.hide()
         self.currentItem.show()
         self.currentAnchorPixmapUrl = self.currentItem.anchorPixmapUrl
         self.movePrevItem()
@@ -740,6 +736,7 @@ class StudentBodyWidget(MyContainer):
         for index in range(idx+1, length):
             if(self.itemList[index].isChild == True):
                 sign_nested = True
+                print("here nested item")
                 self.nestedItems.append(self.itemList[index])
             else:
                 sign_next = True
@@ -752,10 +749,8 @@ class StudentBodyWidget(MyContainer):
             self.nestedItems = []
 
         if(self.nextItem == None):
-            #dont' show nextArrow
             self.nextArrowWidget.hide()
         else:
-            self.nextArrowWidget.show()
             self.moveNextItem()
         #if current item is mousestepitem, then show mouse image
         if type(self.currentItem).__name__ == "CommonLessonMouseStepItem":

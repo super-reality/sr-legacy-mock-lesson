@@ -2,9 +2,9 @@ import sys
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QDialogButtonBox,QMessageBox,\
 QAction, QTabWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QFrame,QLabel,QSlider,QScrollArea,QCheckBox,QSizePolicy,QFileDialog,QDockWidget,\
-     QDialog,QTextEdit,QSizeGrip,QToolButton,QGraphicsOpacityEffect,QProgressBar,QTreeWidget,QTreeWidgetItem,QAbstractItemView,QAbstractScrollArea
+     QDialog,QTextEdit,QSizeGrip,QToolButton,QGraphicsOpacityEffect,QProgressBar,QTreeWidget,QTreeWidgetItem,QAbstractItemView,QAbstractScrollArea,QMenu
 from PyQt5 import QtWidgets
-from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPaintDevice,QPainter,QPen,QColor,QMouseEvent
+from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPaintDevice,QPainter,QPen,QColor,QMouseEvent,QKeySequence
 from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent,QTimer,QPoint,pyqtSignal,QRect
 from Setting import Settings
 from Mybutton import TitleButton,CloseButton
@@ -17,6 +17,7 @@ import time
 import MyUtil
 import Globals
 import os
+import keyboard
 
 class MyFrame(QtWidgets.QWidget):
 
@@ -431,6 +432,7 @@ class QAnchorDialog(QLabel):
         self.lastPosy = None
         self.lastWidth = None
         self.lastHeight = None
+        self.isMovable = True
         
 
         #set object name for style
@@ -449,6 +451,25 @@ class QAnchorDialog(QLabel):
         self.sig_moveResizeEvent.connect(self.childAnchor.processParentMoveEvent)
         
         
+    def setMovable(self,b_movable):
+        self.isMovable = b_movable
+        pass
+    
+    def keyPressEvent(self,event):
+        if(keyboard.is_pressed('ctrl+enter')):
+            self.captureWindwoAtCurrentPosition()
+            pass
+        
+    def contextMenuEvent(self,event):
+        contextmenu = QMenu(self)
+        contextmenu.addAction("Capture",self.captureWindwoAtCurrentPosition,'Ctrl+Enter')
+        action = contextmenu.exec_(self.mapToGlobal(event.pos()))
+        
+
+    def captureWindwoAtCurrentPosition(self):
+        self.mouseDoubleClickEvent(1)
+        self.hide()
+
     def hideAllChild(self,ishide=True):
         if(ishide):
             # self.label_header.hide()
@@ -491,6 +512,11 @@ class QAnchorDialog(QLabel):
         self.pixmapChanged.emit()
         self.captureLastPos()
 
+    def reLocating(self):
+        self.hide()
+        self.show()
+        pass
+
     def mouseDoubleClickEvent(self,event):
 
         posx = self.mapToGlobal(QPoint(0,0)).x()
@@ -511,22 +537,19 @@ class QAnchorDialog(QLabel):
         self.sig_mouseClick.emit(self.posxToEmit,self.posyToEmit)
         
         if(event is not None):
-
             self.pixmapChanged.emit()
-
             self.captureLastPos()
-
         pass
     
     def enterEvent(self,e):
         pass
 
     def mouseMoveEvent(self,e):
-        
-        delta = QPoint (e.globalPos() - self.oldPos)
-        self.move(self.x() + delta.x(), self.y() + delta.y())
-        self.oldPos = e.globalPos()
-        self.sig_moveResizeEvent.emit(delta.x(),delta.y())
+        if(self.isMovable):
+            delta = QPoint (e.globalPos() - self.oldPos)
+            self.move(self.x() + delta.x(), self.y() + delta.y())
+            self.oldPos = e.globalPos()
+            self.sig_moveResizeEvent.emit(delta.x(),delta.y())
 
     def resizeEvent(self,event):
         #if this step is mouseclickstep , calculate child width and let this parent to not be small than child anchor
@@ -566,8 +589,7 @@ class QAnchorDialog(QLabel):
         self.bottomleftgrip.hide()
         if self.ClickPointable == True:
             self.childAnchor.hide()
-
-        
+       
 
     def captureLastPos(self):
         # save last click point
@@ -581,15 +603,24 @@ class QAnchorDialog(QLabel):
         posx = self.mapToGlobal(QPoint(0,0)).x()
         posy = self.mapToGlobal(QPoint(0,0)).y()
         screenH,screenW = getScreenSize()
+
+        isOut = False
         if(posx<0):
             posx = 0
+            isOut = True
         if((posx + self.width())>screenW):
             posx = screenW - self.width()
+            isOut = True
         if(posy<0):
             posy = 0
+            isOut = True
         if(posy + self.height()>screenH):
             posy = screenH - self.height()
+            isOut = True
         self.move(posx,posy)
+        if(isOut == True):
+            self.hide()
+            self.show()
         
     def drawRect(self,posx,posy,poswidth,posheight):
         
