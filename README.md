@@ -3,4 +3,4 @@
     git clone https://github.com/openverse/FunnyLesson
 ### 2. Install Step 2
     cd FunnyLesson
-    setup.sh
+    .\setup.sh
