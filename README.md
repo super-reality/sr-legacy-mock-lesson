@@ -1,6 +1,5 @@
 # FunnyLesson
-installation process:
-    1. 
+### 1. Install Step 1
     git clone https://github.com/openverse/FunnyLesson
-    2.
+### 2. Install Step 2
     setup.sh
