@@ -4,3 +4,4 @@
 ### 2. Install Step 2
     cd FunnyLesson
     .\setup.sh
+    python main.py
