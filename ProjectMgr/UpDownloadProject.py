@@ -27,8 +27,8 @@ import Globals
 def UploadProject( ProjectName = '' ,LocalPath = '' ):
     path = LocalPath
     session = boto3.Session(
-        aws_access_key_id = Settings.aws_access_key_id,
-        aws_secret_access_key= Settings.aws_secret_access_key,
+        aws_access_key_id = Settings.getSetting()['aws_access_key_id'],
+        aws_secret_access_key= Settings.getSetting()['aws_secret_access_key'],
         region_name= Settings.region_name
     )
     s3 = session.resource('s3')
@@ -55,8 +55,8 @@ def download_dir(client, resource, dist, local='/tmp', bucket='your_bucket'):
             resource.meta.client.download_file(bucket, file.get('Key'), dest_pathname)
 def DownloadProject(bucketpath,LocalPath):
     session = boto3.Session(
-        aws_access_key_id = Settings.aws_access_key_id,
-        aws_secret_access_key= Settings.aws_secret_access_key,
+        aws_access_key_id = Settings.getSetting()['aws_access_key_id'],
+        aws_secret_access_key= Settings.getSetting()['aws_secret_access_key'],
         region_name= Settings.region_name
     )
     

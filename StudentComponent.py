@@ -776,7 +776,7 @@ class StudentBodyWidget(MyContainer):
 
         if(self.prevItem is not None and self.currentItem is not None):
             self.prevItem.move(self.currentItem.mapToGlobal(QPoint(0,0))-QPoint(self.prevItem.width(),4))
-            if(self.nextItem is not None):
+            if(self.nextItem is not None and self.currentItem.isHidden() == False):
                 ######################  float next item to next current item #####################
                 # self.nextItem.move(self.currentItem.mapToGlobal(QPoint(0,0))+QPoint(self.currentItem.width()+4,-4))
                 self.moveNextItem()
