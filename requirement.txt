@@ -1,3 +1,9 @@
 pyqt5
 PyQtWebEngine
 Desktopmagic
+opencv-python
+pytesseract
+boto3
+boto
+botocore
+keyboard

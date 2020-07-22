@@ -40,6 +40,7 @@ class Settings:
     projectAlreadyExist = 10
     projectNameNotSpecified = 11
     commonOpacity = 0.2
+    commonOpacityForStudent = 0.9
     childAnchorMarkLineColor = (255,0,0,255)
     childAnchorMarkLineWidth = 2
 
@@ -75,6 +76,9 @@ class Settings:
     anchorDefaultWidth = 300
     anchorDefaultHeight = 200
     arrowwidgetCalibrate = 15
+    shortKeyForCapture = 'ctrl+s'
+    shortKeyForTruncluate = 'ctrl+d'
+    shortKeyForNoTruncluate = 'ctrl+g'
 
 
     #dropbox

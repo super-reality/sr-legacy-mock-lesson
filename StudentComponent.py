@@ -360,6 +360,7 @@ class StudentBodyWidget(MyContainer):
         self.anchorDlg = QAnchorDialog(self)
         self.anchorDlg.setWindowFlags(Qt.FramelessWindowHint|Qt.Dialog)
         self.anchorDlg.setMovable(False)
+        self.anchorDlg.setStateForStudentMode()
 
         #event binding
         self.window().moveEvent = self.processMoveEvent

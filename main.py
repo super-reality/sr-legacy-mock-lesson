@@ -18,7 +18,7 @@ import webbrowser
 from Container import MyBar
 from Mybutton import CommonButton
 import logging
-
+import keyboard
 
 class MainWindow(QWidget):
 
@@ -76,6 +76,9 @@ class MainWindow(QWidget):
         pen.setWidth(2)
         painter.setPen(pen)
         painter.drawRect(QRect(2,2,self.width()-5,self.height()-5))
+    def closeEvent(self,event):
+        if(keyboard._hotkeys is not {}):
+            keyboard.unhook_all_hotkeys()
         
 
 if __name__ == "__main__":

@@ -325,7 +325,6 @@ class MyChildAnchorWidget(CommonFramelessWidget):
         self.lastChildWidth = None
         self.lastChildHeight = None
 
-
     def processParentMoveEvent(self,deltax,deltay):
 
         if(deltax is None or deltax > 10000 or deltax < 0 or deltay < 0 or deltay >10000):
@@ -340,7 +339,6 @@ class MyChildAnchorWidget(CommonFramelessWidget):
         self.toprightgrip.show()
         self.bottomleftgrip.show()
         self.bottomrightgrip.show()
-
 
     def hideEvent(self,event):
 
@@ -400,15 +398,19 @@ class MyChildAnchorWidget(CommonFramelessWidget):
 
 
 
-class QAnchorDialog(QLabel):
+class QAnchorDialog(QFrame):
     
     pixmapChanged = pyqtSignal()
     sig_mouseClick = pyqtSignal(int,int)
     sig_moveResizeEvent = pyqtSignal(int,int)
+    sig_shortkeyforcapture = pyqtSignal()
+    sig_shortkeyfortranslucent = pyqtSignal(bool)
+    
 
     def __init__(self,parent):
         super(QAnchorDialog,self).__init__(parent)
         #set corner's sizeGrip Objects
+        self.lbl_pix = QLabel(self)
         self.topleftgrip =MySizeGrip(self,position=Settings.topleft)
         self.toprightgrip =MySizeGrip(self,position=Settings.topright)
         self.bottomrightgrip =MySizeGrip(self,position=Settings.bottomleft)
@@ -417,6 +419,7 @@ class QAnchorDialog(QLabel):
         self.resize(Settings.anchorDefaultWidth,Settings.anchorDefaultHeight)
         
         self.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
+        self.setAttribute(Qt.WA_TranslucentBackground)
 
         #set opacity
         self.ClickPointable = False
@@ -433,15 +436,20 @@ class QAnchorDialog(QLabel):
         self.lastWidth = None
         self.lastHeight = None
         self.isMovable = True
+        self.isTranslucent = False
         
 
         #set object name for style
-        self.setObjectName("AnchorDlg")
-        self.setStyleSheet('#AnchorDlg{border:2px solid black; border-style:dashed;background-color:#00deff}')
+        self.widget = QWidget(self)
+        self.widget.setObjectName("AnchorDlg")
+        self.widget.setStyleSheet('#AnchorDlg{border:2px solid black; border-style:dashed;background-color:#00deff}')
+        self.layout = MyVBoxLayout(self)
+        self.layout.addWidget(self.widget)
+        
 
         self.setWindowOpacity(Settings.commonOpacity)
-        # self.__initUI()
         self.childAnchor.hide()
+        self.lbl_pix.hide()
 
         #event binding
         self.sig_moveResizeEvent.connect(self.topleftgrip.processParentPositionChangeEvent)
@@ -449,27 +457,54 @@ class QAnchorDialog(QLabel):
         self.sig_moveResizeEvent.connect(self.bottomleftgrip.processParentPositionChangeEvent)
         self.sig_moveResizeEvent.connect(self.bottomrightgrip.processParentPositionChangeEvent)
         self.sig_moveResizeEvent.connect(self.childAnchor.processParentMoveEvent)
+        self.sig_shortkeyforcapture.connect(self.captureFromAnchorWindow)
+        self.sig_shortkeyfortranslucent.connect(self.setTranslucentBackground)
+        keyboard.add_hotkey(Settings.shortKeyForCapture,self.hookKeyEventFromGlobal,args=())
+        keyboard.add_hotkey(Settings.shortKeyForNoTruncluate,self.hookKeyEventFromGlobal,args=())
+        keyboard.add_hotkey(Settings.shortKeyForTruncluate,self.hookKeyEventFromGlobal,args=())
+
         
-        
+    def setPixmap(self,pix):
+        self.lbl_pix.setPixmap(pix)
+    def pixmap(self):
+        return self.lbl_pix.pixmap()
+     
     def setMovable(self,b_movable):
         self.isMovable = b_movable
         pass
     
-    def keyPressEvent(self,event):
-        if(keyboard.is_pressed('ctrl+enter')):
-            self.captureWindwoAtCurrentPosition()
-            pass
-        
-    def contextMenuEvent(self,event):
-        contextmenu = QMenu(self)
-        contextmenu.addAction("Capture",self.captureWindwoAtCurrentPosition,'Ctrl+Enter')
-        action = contextmenu.exec_(self.mapToGlobal(event.pos()))
-        
-
-    def captureWindwoAtCurrentPosition(self):
+    def hookKeyEventFromGlobal(self):
+        if(self.isHidden() == True):
+            return
+        if(keyboard.is_pressed(Settings.shortKeyForCapture)):
+            self.sig_shortkeyforcapture.emit()
+        if(keyboard.is_pressed(Settings.shortKeyForTruncluate)):
+            self.sig_shortkeyfortranslucent.emit(True)
+        if(keyboard.is_pressed(Settings.shortKeyForNoTruncluate)):
+            self.sig_shortkeyfortranslucent.emit(False)
+        pass
+    
+    def captureFromAnchorWindow(self):
         self.mouseDoubleClickEvent(1)
         self.hide()
-
+        
+    def setStateForStudentMode(self):
+        self.setWindowOpacity(Settings.commonOpacityForStudent)
+        self.widget.setStyleSheet('#AnchorDlg{border:3px solid black; border-style:dashed;background-color:transparent}')
+        
+        pass
+    def setTranslucentBackground(self,isTrunslucent):
+        
+        self.isTranslucent = not self.isTranslucent
+        if(self.isTranslucent):
+            
+            self.widget.setStyleSheet('#AnchorDlg{border:2px solid black; border-style:dashed;background-color:transparent}')
+            pass
+        else:
+            self.widget.setStyleSheet('#AnchorDlg{border:2px solid black; border-style:dashed;background-color:#00deff}')
+            pass
+        self.show()
+    
     def hideAllChild(self,ishide=True):
         if(ishide):
             # self.label_header.hide()
@@ -524,6 +559,7 @@ class QAnchorDialog(QLabel):
         W = self.width()
         H = self.height()
         
+
         #hide temporarily to get image behind of this dialog
         self.hide()
         if event is not None:
@@ -563,7 +599,6 @@ class QAnchorDialog(QLabel):
         self.sig_moveResizeEvent.emit(None,None)
 
     def showEvent(self,e):
-        # self.move(self.parentWidget().mapToGlobal(QPoint(220,220))+QPoint(100,0))
         self.topleftgrip.show()
         self.bottomleftgrip.show()
         self.bottomrightgrip.show()
@@ -579,7 +614,6 @@ class QAnchorDialog(QLabel):
                 self.childAnchor.resize(self.width()//2,self.height()//2)
                 self.childAnchor.processParentMoveEvent(None,None)
                 pass
-        pass
 
     def hideEvent(self,e):
 
@@ -589,7 +623,6 @@ class QAnchorDialog(QLabel):
         self.bottomleftgrip.hide()
         if self.ClickPointable == True:
             self.childAnchor.hide()
-       
 
     def captureLastPos(self):
         # save last click point
@@ -839,7 +872,6 @@ class MyDropableLableForStudent(MyDropableLable):
         pass
     def enterEvent(self,event):
         self.setCursor(QCursor(Qt.PointingHandCursor))
-        
 
 class MyWebView(MyFrame):
     def __init__(self,parent):
@@ -1171,9 +1203,6 @@ class MyTree(QTreeWidget):
         
         pass
 
-
-
-
 class MyTreeItem(QTreeWidgetItem):
 
     def __init__(self,text = 'None',iconPath='icons/directory.png',isParent = False):
@@ -1202,7 +1231,6 @@ class MyTreeItem(QTreeWidgetItem):
         for path in paths:
             curPath = os.path.join(curPath,path)
         return curPath
-
 
 class TextToTreeItem:
 
