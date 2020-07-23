@@ -2,7 +2,8 @@ import sys
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QDialogButtonBox,QMessageBox,\
 QAction, QTabWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QFrame,QLabel,QSlider,QScrollArea,QCheckBox,QSizePolicy,QFileDialog,QDockWidget,\
-     QDialog,QTextEdit,QSizeGrip,QToolButton,QGraphicsOpacityEffect,QProgressBar,QTreeWidget,QTreeWidgetItem,QAbstractItemView,QAbstractScrollArea,QMenu
+     QDialog,QTextEdit,QSizeGrip,QToolButton,QGraphicsOpacityEffect,QProgressBar,QTreeWidget,QTreeWidgetItem,QAbstractItemView,QAbstractScrollArea,QMenu,\
+         QGraphicsDropShadowEffect
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon,QFont,QCursor,QPixmap,QPaintDevice,QPainter,QPen,QColor,QMouseEvent,QKeySequence
 from PyQt5.QtCore import pyqtSlot, Qt, QSize,QEvent,QTimer,QPoint,pyqtSignal,QRect
@@ -489,15 +490,11 @@ class QAnchorDialog(QFrame):
         self.hide()
         
     def setStateForStudentMode(self):
-        self.setWindowOpacity(Settings.commonOpacityForStudent)
         self.widget.setStyleSheet('#AnchorDlg{border:3px solid black; border-style:dashed;background-color:transparent}')
-        
         pass
     def setTranslucentBackground(self,isTrunslucent):
-        
         self.isTranslucent = not self.isTranslucent
         if(self.isTranslucent):
-            
             self.widget.setStyleSheet('#AnchorDlg{border:2px solid black; border-style:dashed;background-color:transparent}')
             pass
         else:
@@ -686,6 +683,24 @@ class QAnchorDialog(QFrame):
         #     painter.drawEllipse(self.posxToEmit-20,self.posyToEmit-20,40,40)
         # else:
         #     pass
+
+class QAnchorDialogForStudent(QFrame):
+
+    def __init__(self,parent):
+        super(QAnchorDialogForStudent,self).__init__(parent)
+        self.setWindowFlags(Qt.FramelessWindowHint|Qt.Dialog)
+        self.__initUI()
+
+    def __initUI(self):
+        self.frame = QFrame(self)
+        self.layout = MyVBoxLayout(self)
+        self.layout.addWidget(self.frame)
+        self.setShadow()
+        pass
+    def setShadow(self):
+        shadow = QGraphicsDropShadowEffect(blurRadius=15, xOffset=13, yOffset=13)
+        self.frame.setGraphicsEffect(shadow)
+
 
 
 class MyRichTextDockWidget(QMainWindow):

@@ -145,15 +145,17 @@ def getPixmapFromScreen(posx,posy,W,H):
 
         return pix.copy()
 
-def convertCV2ImageToPixmap(cv2_img=None):
+def convertCV2ImageToPixmap(cv2_img=None,parent=None):
 
-    if(cv2_img is None):
+    if(cv2_img is None or parent is None):
         return
     
     height, width, channel = cv2_img.shape
-    bytesPerLine = 3 * width
-    qImg = QImage(cv2_img.data, width, height, bytesPerLine, QImage.Format_RGB888)
-    
+    bytesPerLine = channel * width
+
+    cv2_img = np.require(cv2_img, np.uint8, 'C')
+
+    qImg = QImage(cv2_img.data, width, height, bytesPerLine, QImage.Format_ARGB32)
     return qImg
 
 def isImageUrl(url):
@@ -440,3 +442,206 @@ def getTextFromImage(cv2_img = None):
     - Capitalization should be exact too.
     '''
 ############################################ End ###############################################
+
+
+
+
+####################################Glow effect ###################################
+from textwrap import wrap
+import argparse
+import array
+import cairo
+from PIL import ImageFilter, Image
+import numpy as np
+
+def transform_color(hex_color):
+    try:
+        color = [_/255.0 for _ in map(lambda x: int(x, 16), wrap(hex_color, 2))]
+    except ValueError:
+        raise Exception("Invalid color format: {}".format(hex_color))
+    if len(color) != 3:
+        raise Exception("Invalid color format: {}".format(hex_color))
+    return color
+
+
+class NeonGlowText:
+    """Neon glow text"""
+    
+    MIN_FONT_SIZE = 20
+    MAX_FONT_SIZE = 300
+    MAX_PADDING   = 120
+    MIN_SHADOW    = 20
+    FONT          = "Zapfino"
+
+    BG_COLOR   = '000000'
+    GLOW_COLOR = '20baff' #(0.929, 0.055, 0.467)
+    FG_COLOR_1 = 'ff31f4' #(1, 0.196, 0.957)
+    FG_COLOR_2 = 'ffd796' #(1, 0.847, 0.592)
+    FILL_COLOR = 'FFFFFF'
+
+    def __init__(self, args_dict):
+        self.text           = 'acer'
+        self.filename       = '1.png'
+        self.width          = 100
+        self.height         = 100
+        self.font           = self.FONT
+        self.font_size      = self.MIN_FONT_SIZE
+        self.bg_color       = self.BG_COLOR
+        self.glow_color     = self.GLOW_COLOR
+        self.fill_color     = self.FILL_COLOR
+        self.stroke_1_color = self.FG_COLOR_1
+        self.stroke_2_color = self.FG_COLOR_2
+        self.commonStrokeWidth = 5
+
+
+        if(self.font_size is None):
+            self.font_size = self.MIN_FONT_SIZE
+    
+    def draw(self):
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.width, self.height)
+        
+        cr = cairo.Context(surface)
+        
+        self._set_font(cr)
+        self._move_to_center(cr)
+        
+        self._paint_bg(cr)
+
+        cr.text_path(self.text)
+        
+        self._draw_glow(cr)
+        
+        surface = self._blur(surface, 35)
+        
+        cr = cairo.Context(surface)
+        
+        self._set_font(cr)
+        self._move_to_center(cr)
+        
+        cr.text_path(self.text)
+        self._draw_neon(cr)
+        
+        surface.write_to_png(self.filename)
+    
+    def _set_font(self, cr):
+        cr.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+
+        if self.font_size:
+            cr.set_font_size(self.font_size)
+            return
+
+        # Let's find an appropriate font size...
+        f_size = self.MAX_FONT_SIZE
+        
+        while True:
+            cr.set_font_size(f_size)
+            _, _, t_width, t_height, _, _ = cr.text_extents(self.text)
+            
+            # Check if text is within the desired boundaries
+            if not (t_width > self.width - min(self.MAX_PADDING, f_size) or
+                t_height > self.height - min(self.MAX_PADDING, f_size)) \
+                or f_size <= self.MIN_FONT_SIZE:
+                    break
+                    
+            f_size -= 2
+        
+        self.font_size = f_size
+
+    def _move_to_center(self, cr):
+        cr.select_font_face(self.font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+        cr.set_font_size(self.font_size)
+        x_bearing, y_bearing, t_width, t_height, _, _ = cr.text_extents(self.text)
+        
+        x = self.width / 2 - (t_width / 2 + x_bearing)
+        y = self.height / 2 - (t_height / 2 + y_bearing)
+
+        cr.move_to(x, y)
+
+    def _paint_bg(self, cr):
+        cr.set_source_rgb(*transform_color(self.bg_color))
+        cr.paint()
+        
+    def _draw_glow(self, cr):
+        if(self.font_size is None):
+            self.font_size = self.MAX_FONT_SIZE
+        stroke_width = max(self.font_size / 3, self.MIN_SHADOW)
+        self._draw_stroke(cr, self.glow_color, stroke_width)
+        self._fill(cr, self.fill_color)
+
+    def _draw_stroke(self, cr, rgb, stroke_width):
+        cr.set_source_rgb(*transform_color(rgb))
+        cr.set_line_width(stroke_width)
+        cr.stroke_preserve()
+        
+    def _fill(self, cr, rgb):
+        cr.set_source_rgb(*transform_color(rgb))
+        cr.fill()
+
+    def _draw_neon(self, cr):
+        self._draw_stroke(cr, self.stroke_1_color, 10 if self.font_size > 100 else 5)
+        self._draw_stroke(cr, self.stroke_2_color, 5 if self.font_size > 100 else 2)
+        self._fill(cr, self.fill_color)
+        
+    def _blur(self, surface, blur_amount,width=None,height=None):
+        # Load as PIL Image
+        bg_image = Image.frombuffer("RGBA",( surface.get_width(), surface.get_height() ), surface.get_data(), "raw", "RGBA", 0, 1)
+        
+        # Apply blur
+        blurred_image = bg_image.filter(ImageFilter.GaussianBlur(blur_amount))
+        
+        # Restore cairo surface
+        image_bytes = blurred_image.tobytes()
+        image_array = array.array('B', image_bytes)
+        if(width is None):
+            stride = cairo.ImageSurface.format_stride_for_width(cairo.FORMAT_ARGB32, self.width)
+            return surface.create_for_data(image_array, cairo.FORMAT_ARGB32, self.width, self.height, stride)
+        else:
+            stride = cairo.ImageSurface.format_stride_for_width(cairo.FORMAT_ARGB32, width)
+            return surface.create_for_data(image_array, cairo.FORMAT_ARGB32, width, height, stride)
+
+    def drawRect(self,width,height):
+
+        if width<1 or height<1:
+            return None
+        
+        stroke_width = 15
+        bounus = 20
+        child_width = width
+        child_height = height
+        parent_width = width + bounus
+        parent_height = height + bounus
+        canvas_width = parent_width
+        canvas_height = parent_height
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,canvas_width,canvas_height)
+        cr = cairo.Context(surface)
+        # cr.rectangle(canvas_width//2 - parent_width//2, canvas_height//2 - parent_height//2,parent_width,parent_height)
+        cr.rectangle(canvas_width//2-child_width//2,canvas_height//2-child_height//2,child_width,child_height)
+
+        
+        ######### drawing and blur
+        cr.set_source_rgb(*transform_color(self.glow_color))
+        cr.set_line_width(stroke_width)
+        cr.stroke_preserve()
+        surface = self._blur(surface, stroke_width/2 ,width=canvas_width,height=canvas_height)
+        ######## end of drawing and blur
+
+        ########### draw highlight
+        # cr = cairo.Context(surface)
+        # # cr.rectangle(canvas_width//2 - parent_width//2, canvas_height//2 - parent_height//2,parent_width,parent_height)
+        # cr.rectangle(canvas_width//2-child_width//2,canvas_height//2-child_height//2,child_width,child_height)
+        # cr.set_source_rgb(*transform_color(self.glow_color))
+        # # cr.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
+        # # self._fill(cr,self.fill_color)
+        # cr.stroke_preserve()
+        # cr.fill_preserve()
+        # surface = self._blur(surface, width//(aux_val)//10,width=canvas_width,height=canvas_height)
+
+        data = surface.get_data()
+        array = np.ndarray(shape=(canvas_height,canvas_width,4),dtype=np.uint8,buffer=data)
+        posx = canvas_width//2 - child_width//2 
+        posy = canvas_height//2 - child_height//2
+        array[posy:posy+child_height,posx:posx + child_width] = [0,0,0,0]
+        return array
+
+
+#################### end #########################

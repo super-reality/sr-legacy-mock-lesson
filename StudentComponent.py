@@ -337,6 +337,7 @@ class CommonLessonPiskelStepItem(CommonLessonItem):
     
 class StudentBodyWidget(MyContainer):
     resetEvent = pyqtSignal(str)
+    sig_imageconverted = pyqtSignal(QPixmap)
     def __init__(self,parent):
     
         super(StudentBodyWidget,self).__init__(parent)
@@ -351,23 +352,30 @@ class StudentBodyWidget(MyContainer):
         self.currentAnchorPixmapUrl = None
         
         #set timer
-        self.timer = QTimer(self)
-        self.timer.setInterval(1000)
-        self.timer.timeout.connect(self.processAnchorAnimation)
-        self.timer.start()
+        # self.timer = QTimer(self)
+        # self.timer.setInterval(1000)
+        # self.timer.timeout.connect(self.processAnchorAnimation)
+        # self.timer.start()
         self.step = 0
 
-        self.anchorDlg = QAnchorDialog(self)
+        self.anchorDlg = QLabel(self)
         self.anchorDlg.setWindowFlags(Qt.FramelessWindowHint|Qt.Dialog)
-        self.anchorDlg.setMovable(False)
-        self.anchorDlg.setStateForStudentMode()
+        self.anchorDlg.setAttribute(Qt.WA_TranslucentBackground)
+        self.anchorDlg.setScaledContents(True)
+        self.anchorDlg.enterEvent = self.processAnchorWindowEnterEvent
+        self.sig_imageconverted.connect(self.sig_imageconvertedProcess)
 
         #event binding
         self.window().moveEvent = self.processMoveEvent
-        # self.initializeObject(path)
 
+    def processAnchorWindowEnterEvent(self,event):
+        self.anchorDlg.hide()
+        pass
+    def sig_imageconvertedProcess(self,pix):
+        print(type(pix).__name__,"chekcmkmerhe1")
+        self.anchorDlg.setPixmap(pix)
+        pass
     def processMatchByAnchor(self,anchorUrl,posx=None,posy=None,posWidth=None,posHeight=None):
-        # self.anchorDlg = QAnchorDialog(None)
         logging.info("anchor url is :" + anchorUrl)
         if(anchorUrl is not None):
             self.currentAnchorPixmapUrl = (anchorUrl)
@@ -387,31 +395,37 @@ class StudentBodyWidget(MyContainer):
                 logging.info('Oh cool find the matching image')
                 pass
             logging.info("click point pos  is : %s, %s",posx,posy)
-            if posx <1000  and posy <1000:
-                self.anchorDlg.ClickPointable = False
-                # self.anchorDlg.posyToEmit = posy
-                # self.anchorDlg.posxToEmit = posx
-                self.anchorDlg.drawRect(posx,posy,posWidth,posHeight)
-                # self.anchorDlg.update()
-                # self.anchorDlg.setAttribute(Qt.WA_TranslucentBackground)
+            if posx <1000  and posy <1000 and posx >0 and posy >0:
+                cv_image = Globals.effectEngine.drawRect(posWidth,posHeight)
+                if(cv_image is None):
+                    return
+                h,w,_ = cv_image.shape
+                self.anchorDlg.resize(w,h)
+                X = X + posx
+                Y = Y + posy
+                self.anchorDlg.move(X-(w-posWidth)//2,Y-(h-posHeight)//2)
                 
+                qimage = MyUtil.convertCV2ImageToPixmap(cv_image.copy(),self)
+                self.anchorDlg.setPixmap(QPixmap(qimage))
             else:
                 #set opacity
-                self.anchorDlg.ClickPointable = False
-                self.anchorDlg.posyToEmit = None
-                self.anchorDlg.posxToEmit = None
-                self.anchorDlg.drawRect(None,None,None,None)
-                # self.anchorDlg.setAttribute(Qt.FramelessWindowHint)
-                # self.anchorDlg.setWindowFlags(Qt.FramelessWindowHint|Qt.Window)
+                cv_image = Globals.effectEngine.drawRect(H,W)
+
+                if(cv_image is None):
+                    return
+
+                h,w,_ = cv_image.shape
+                self.anchorDlg.resize(w,h)
+                X = X-(w-H)//2
+                Y = Y-(h-W)//2
+                self.anchorDlg.move(X,Y)
+                
+                image = MyUtil.convertCV2ImageToPixmap(cv_image.copy(),self)
+                self.anchorDlg.setPixmap(QPixmap(image))
                 pass
             
-            logging.info("anchor dialog is moving to %s, %s",X,Y)
-            logging.info("anchor dialog is resizing to %s, %s",H,W)
-            self.anchorDlg.resize(H,W)
-            self.anchorDlg.move(X,Y)
-            self.anchorDlg.hideAllChild()
             self.step = 1
-            
+            self.anchorDlg.show()
             #############check me here this is for test
             pass
         else:
@@ -431,7 +445,6 @@ class StudentBodyWidget(MyContainer):
         if(self.step%2):
             logging.info("anchor dialgo is showing now")
             self.anchorDlg.show()
-            self.anchorDlg.hideAllChild()
         else:
             logging.info("anchor dialgo is hiding now")
             self.anchorDlg.hide()

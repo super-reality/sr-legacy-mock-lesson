@@ -40,7 +40,7 @@ class Settings:
     projectAlreadyExist = 10
     projectNameNotSpecified = 11
     commonOpacity = 0.2
-    commonOpacityForStudent = 0.9
+    commonOpacityForStudent = 1
     childAnchorMarkLineColor = (255,0,0,255)
     childAnchorMarkLineWidth = 2
 
