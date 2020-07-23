@@ -10,7 +10,8 @@ from Container import *
 import os
 from MyUtil import match_image,drawRectToPixmap,convertPixmapToGray,get_marked_image,convertCV2ImageToPixmap,loadData
 import logging
-
+import win32com.client as wincl
+import threading
 
 class StudentHeaderToolBar(MyFrame):
 
@@ -117,6 +118,13 @@ class CommonLessonItem(MyFrame):
     
     def processMatchEvent(self,event):
         self.sig_ItemHeaderIcon.emit(self.anchorPixmapUrl,self.posx,self.posy,self.posWidth,self.posHeight)
+        th_audio = threading.Thread(target=self.playAudioFromText,daemon=True)
+        th_audio.start()
+
+    def playAudioFromText(self):
+        speak = wincl.Dispatch("SAPI.SpVoice")
+        speak.Speak(self.lbl_description.text())
+        pass
         
     def showEvent(self,event):
         #if clickstep show child anchor
@@ -413,7 +421,7 @@ class StudentBodyWidget(MyContainer):
 
                 if(cv_image is None):
                     return
-
+                
                 h,w,_ = cv_image.shape
                 self.anchorDlg.resize(w,h)
                 X = X-(w-H)//2

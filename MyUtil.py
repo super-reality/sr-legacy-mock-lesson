@@ -375,8 +375,6 @@ def get_marked_image(correct,image):
     (h,w,c) = img.shape
         
     
-    # cv2.imwrite("1.png",img)
-    # img = cv2.imread("1.png")
     image = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     string = pyt.image_to_string(image)
 
@@ -604,8 +602,8 @@ class NeonGlowText:
         if width<1 or height<1:
             return None
         
-        stroke_width = 15
-        bounus = 20
+        stroke_width = 25
+        bounus = 40
         child_width = width
         child_height = height
         parent_width = width + bounus
@@ -624,17 +622,6 @@ class NeonGlowText:
         cr.stroke_preserve()
         surface = self._blur(surface, stroke_width/2 ,width=canvas_width,height=canvas_height)
         ######## end of drawing and blur
-
-        ########### draw highlight
-        # cr = cairo.Context(surface)
-        # # cr.rectangle(canvas_width//2 - parent_width//2, canvas_height//2 - parent_height//2,parent_width,parent_height)
-        # cr.rectangle(canvas_width//2-child_width//2,canvas_height//2-child_height//2,child_width,child_height)
-        # cr.set_source_rgb(*transform_color(self.glow_color))
-        # # cr.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
-        # # self._fill(cr,self.fill_color)
-        # cr.stroke_preserve()
-        # cr.fill_preserve()
-        # surface = self._blur(surface, width//(aux_val)//10,width=canvas_width,height=canvas_height)
 
         data = surface.get_data()
         array = np.ndarray(shape=(canvas_height,canvas_width,4),dtype=np.uint8,buffer=data)
