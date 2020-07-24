@@ -23,7 +23,7 @@ from collections import namedtuple
 
 import threading
 import boto3
-
+from pygame import mixer 
 #################### Get project Tree from current Teacher Lessson folder ##########################
 
 def path_to_dict(pathDir,childList=[]):
@@ -472,7 +472,7 @@ class NeonGlowText:
     FONT          = "Zapfino"
 
     BG_COLOR   = '000000'
-    GLOW_COLOR = '20baff' #(0.929, 0.055, 0.467)
+    GLOW_COLOR = '0096ff' #(0.929, 0.055, 0.467)
     FG_COLOR_1 = 'ff31f4' #(1, 0.196, 0.957)
     FG_COLOR_2 = 'ffd796' #(1, 0.847, 0.592)
     FILL_COLOR = 'FFFFFF'
@@ -632,3 +632,40 @@ class NeonGlowText:
 
 
 #################### end #########################
+
+
+###################TTS#########################
+from google.cloud import texttospeech as tts
+import os
+import playsound
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="game-gen.json"
+from google.cloud import texttospeech
+import io
+def playAudioFromText(Text=""):
+    # Instantiates a client
+    client = texttospeech.TextToSpeechClient()
+    # Set the text input to be synthesized
+    synthesis_input = texttospeech.SynthesisInput(text=Text)
+
+    # Build the voice request, select the language code ("en-US") and the ssml
+    # voice gender ("neutral")
+    voice = texttospeech.VoiceSelectionParams(
+        language_code=Settings.getSetting()['language-tts'],
+        ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL,name=Settings.getSetting()['name-tts'])
+
+    # Select the type of audio file you want returned
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.MP3,speaking_rate=Settings.getSetting()['speaking_rate-tts'])
+
+    # Perform the text-to-speech request on the text input with the selected
+    # voice parameters and audio file type
+    response = client.synthesize_speech(input=synthesis_input,voice=voice,audio_config=audio_config)
+    # The response's audio_content is binary.
+    mem_file = io.BytesIO(response.audio_content)
+    mem_file.seek(0)
+    mixer.init()
+    mixer.music.load(mem_file)
+    mixer.music.play(0)
+    while mixer.music.get_busy():
+        pass
+    mem_file.close()

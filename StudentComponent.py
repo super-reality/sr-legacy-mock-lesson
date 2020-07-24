@@ -122,8 +122,7 @@ class CommonLessonItem(MyFrame):
         th_audio.start()
 
     def playAudioFromText(self):
-        speak = wincl.Dispatch("SAPI.SpVoice")
-        speak.Speak(self.lbl_description.text())
+        MyUtil.playAudioFromText(Text=self.lbl_description.text())
         pass
         
     def showEvent(self,event):

@@ -484,7 +484,8 @@ class QAnchorDialog(QFrame):
         if(keyboard.is_pressed(Settings.shortKeyForNoTruncluate)):
             self.sig_shortkeyfortranslucent.emit(False)
         pass
-    
+    def closeEvent(self,event):
+        keyboard.remove_hotkey(self.hookKeyEventFromGlobal)
     def captureFromAnchorWindow(self):
         self.mouseDoubleClickEvent(1)
         self.hide()
