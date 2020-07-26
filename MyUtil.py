@@ -145,6 +145,16 @@ def getPixmapFromScreen(posx,posy,W,H):
 
         return pix.copy()
 
+def makeTransparentFromMask(cv_image):
+    gray_overaly = cv2.cvtColor(cv_image.copy(),cv2.COLOR_BGR2GRAY)
+    max_val = np.max(gray_overaly)
+    alpha_foreground = (gray_overaly[:,:] / 255.0)*(gray_overaly[:,:] / 255.0)*(gray_overaly[:,:] / 255.0)*(gray_overaly[:,:] / 255.0)\
+    *255*255*255*(255/max_val)*255/max_val/max_val/max_val
+    # set adjusted colors
+    cv_image[:,:,3] = alpha_foreground
+    return cv_image
+    
+
 def convertCV2ImageToPixmap(cv2_img=None,parent=None):
 
     if(cv2_img is None or parent is None):
@@ -156,6 +166,7 @@ def convertCV2ImageToPixmap(cv2_img=None,parent=None):
     cv2_img = np.require(cv2_img, np.uint8, 'C')
 
     qImg = QImage(cv2_img.data, width, height, bytesPerLine, QImage.Format_ARGB32)
+
     return qImg
 
 def isImageUrl(url):
@@ -262,6 +273,21 @@ def convertImageToGray(image):
 def loadImageFromUrl(url):
     img = cv2.imread(url,0)
     return img
+
+def addTwoCVImage(background,overlay):
+    foreground = overlay
+    gray_overaly = cv2.cvtColor(overlay.copy(),cv2.COLOR_BGR2GRAY)
+    alpha_background = background[:,:,3] / 255.0
+    alpha_background[:,:] = 0.99
+    max_val = np.max(gray_overaly)
+    alpha_foreground = (gray_overaly[:,:] / 255.0)*(gray_overaly[:,:] / 255.0)*(gray_overaly[:,:] / 255.0)*255*255*255/max_val/max_val/max_val
+    
+    # set adjusted colors
+    for color in range(0, 3):
+        background[:,:,color] = alpha_foreground * foreground[:,:,color] + \
+            alpha_background * background[:,:,color] * (1 - alpha_foreground)
+    background[:,:,3] = (1 - (1 - alpha_foreground) * (1 - alpha_background)) * 255
+    return background
 
 def convertPixmapToGray(pixmap=None,isgray=True):
     if(pixmap is not None):
@@ -496,6 +522,7 @@ class NeonGlowText:
             self.font_size = self.MIN_FONT_SIZE
     
     def draw(self):
+
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.width, self.height)
         
         cr = cairo.Context(surface)
@@ -597,13 +624,20 @@ class NeonGlowText:
             stride = cairo.ImageSurface.format_stride_for_width(cairo.FORMAT_ARGB32, width)
             return surface.create_for_data(image_array, cairo.FORMAT_ARGB32, width, height, stride)
 
+    def drawRectStroke(self,canvas_width,canvas_height,child_width,child_height,stroke_width,cr):
+        cr.rectangle(canvas_width//2-child_width//2,canvas_height//2-child_height//2,child_width,child_height)
+        cr.set_source_rgb(*transform_color(self.glow_color))
+        cr.set_line_width(stroke_width)
+        cr.stroke_preserve()
+        pass
+
     def drawRect(self,width,height):
 
-        if width<1 or height<1:
+        if width < 1 or height < 1:
             return None
         
-        stroke_width = 25
-        bounus = 40
+        stroke_width = 45
+        bounus = 60
         child_width = width
         child_height = height
         parent_width = width + bounus
@@ -612,23 +646,36 @@ class NeonGlowText:
         canvas_height = parent_height
         surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,canvas_width,canvas_height)
         cr = cairo.Context(surface)
-        # cr.rectangle(canvas_width//2 - parent_width//2, canvas_height//2 - parent_height//2,parent_width,parent_height)
-        cr.rectangle(canvas_width//2-child_width//2,canvas_height//2-child_height//2,child_width,child_height)
-
         
-        ######### drawing and blur
-        cr.set_source_rgb(*transform_color(self.glow_color))
-        cr.set_line_width(stroke_width)
-        cr.stroke_preserve()
-        surface = self._blur(surface, stroke_width/2 ,width=canvas_width,height=canvas_height)
+        self.drawRectStroke(canvas_width,canvas_height,child_width,child_height,stroke_width,cr)
+        surface = self._blur(surface, stroke_width/4 ,width=canvas_width,height=canvas_height)
+        cr = cairo.Context(surface)
+        self.drawRectStroke(canvas_width,canvas_height,child_width,child_height,stroke_width/3,cr)
+        surface = self._blur(surface, stroke_width/6 ,width=canvas_width,height=canvas_height)
         ######## end of drawing and blur
 
         data = surface.get_data()
         array = np.ndarray(shape=(canvas_height,canvas_width,4),dtype=np.uint8,buffer=data)
-        posx = canvas_width//2 - child_width//2 
+        posx = canvas_width//2 - child_width//2
         posy = canvas_height//2 - child_height//2
+
         array[posy:posy+child_height,posx:posx + child_width] = [0,0,0,0]
+        array = self.increase_brightness(array)
         return array
+
+    def increase_brightness(self,img, value=20):
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        h, s, v = cv2.split(hsv)
+
+        lim = 255 - value
+        v[v > lim] = 255
+        v[v <= lim] += value
+
+        final_hsv = cv2.merge((h, s, v))
+        img = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
+        img = cv2.cvtColor(img,cv2.COLOR_BGR2BGRA)
+        
+        return img
 
 
 #################### end #########################
@@ -641,11 +688,17 @@ import playsound
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="game-gen.json"
 from google.cloud import texttospeech
 import io
-def playAudioFromText(Text=""):
+def playAudioFromText(Text="",):
+    
     # Instantiates a client
     client = texttospeech.TextToSpeechClient()
+    
     # Set the text input to be synthesized
-    synthesis_input = texttospeech.SynthesisInput(text=Text)
+    
+    if '<speak>' in Text:
+        synthesis_input = texttospeech.SynthesisInput(ssml=Text)
+    else:
+        synthesis_input = texttospeech.SynthesisInput(text=Text)
 
     # Build the voice request, select the language code ("en-US") and the ssml
     # voice gender ("neutral")

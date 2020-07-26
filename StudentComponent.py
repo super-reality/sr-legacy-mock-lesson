@@ -122,7 +122,8 @@ class CommonLessonItem(MyFrame):
         th_audio.start()
 
     def playAudioFromText(self):
-        MyUtil.playAudioFromText(Text=self.lbl_description.text())
+        if (self.lbl_description is not None and self.lbl_description.text() != ''):
+            MyUtil.playAudioFromText(Text=self.lbl_description.text())
         pass
         
     def showEvent(self,event):
@@ -411,9 +412,10 @@ class StudentBodyWidget(MyContainer):
                 X = X + posx
                 Y = Y + posy
                 self.anchorDlg.move(X-(w-posWidth)//2,Y-(h-posHeight)//2)
-                
-                qimage = MyUtil.convertCV2ImageToPixmap(cv_image.copy(),self)
-                self.anchorDlg.setPixmap(QPixmap(qimage))
+                cv_image = MyUtil.makeTransparentFromMask(cv_image)
+                image = MyUtil.convertCV2ImageToPixmap(cv_image.copy(),self)
+                self.anchorDlg.clear()
+                self.anchorDlg.setPixmap(QPixmap(image))
             else:
                 #set opacity
                 cv_image = Globals.effectEngine.drawRect(H,W)
@@ -426,8 +428,9 @@ class StudentBodyWidget(MyContainer):
                 X = X-(w-H)//2
                 Y = Y-(h-W)//2
                 self.anchorDlg.move(X,Y)
-                
+                cv_image = MyUtil.makeTransparentFromMask(cv_image)
                 image = MyUtil.convertCV2ImageToPixmap(cv_image.copy(),self)
+                self.anchorDlg.clear()
                 self.anchorDlg.setPixmap(QPixmap(image))
                 pass
             
@@ -797,7 +800,8 @@ class StudentBodyWidget(MyContainer):
 
         if(self.prevItem is not None and self.currentItem is not None):
             self.prevItem.move(self.currentItem.mapToGlobal(QPoint(0,0))-QPoint(self.prevItem.width(),4))
-            if(self.nextItem is not None and self.currentItem.isHidden() == False):
+            
+            if( self.currentItem.isHidden() == False):
                 ######################  float next item to next current item #####################
                 # self.nextItem.move(self.currentItem.mapToGlobal(QPoint(0,0))+QPoint(self.currentItem.width()+4,-4))
                 self.moveNextItem()

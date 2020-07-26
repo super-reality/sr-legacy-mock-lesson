@@ -485,7 +485,8 @@ class QAnchorDialog(QFrame):
             self.sig_shortkeyfortranslucent.emit(False)
         pass
     def closeEvent(self,event):
-        keyboard.remove_hotkey(self.hookKeyEventFromGlobal)
+        # keyboard.remove_hotkey(self.hookKeyEventFromGlobal)
+        pass
     def captureFromAnchorWindow(self):
         self.mouseDoubleClickEvent(1)
         self.hide()
