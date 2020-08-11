@@ -703,8 +703,6 @@ class QAnchorDialogForStudent(QFrame):
         shadow = QGraphicsDropShadowEffect(blurRadius=15, xOffset=13, yOffset=13)
         self.frame.setGraphicsEffect(shadow)
 
-
-
 class MyRichTextDockWidget(QMainWindow):
     def __init__(self, *args):
 

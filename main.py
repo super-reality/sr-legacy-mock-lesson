@@ -79,6 +79,8 @@ class MainWindow(QWidget):
     def closeEvent(self,event):
         if(keyboard._hotkeys is not {}):
             keyboard.unhook_all_hotkeys()
+
+    
         
 
 if __name__ == "__main__":
