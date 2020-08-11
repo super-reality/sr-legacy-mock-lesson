@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, \
 QAction, QTabWidget,QVBoxLayout,QHBoxLayout,QGridLayout,QFrame,QLabel,QSlider,QScrollArea,QCheckBox,QSizePolicy,QFileDialog,QDockWidget, QDialog
 from Component import MyTableWidget
 import webbrowser
-from Container import MyBar
+from Container import MyBar,QAnchorDialog
 from Mybutton import CommonButton
 import logging
 import keyboard
@@ -24,63 +24,13 @@ class MainWindow(QWidget):
 
     def __init__(self):
         super(MainWindow, self).__init__()
-        self.layout  = QGridLayout()
-        titlebar = MyBar(self)
-        titlebar.setStyleSheet('border: 1px solid')
-        self.layout.addWidget(titlebar,0,0,1,100)
-        body = MyTableWidget(self)
-        self.layout.addWidget(body,1,0,100,100)
-
-        #profile and setting button
-        bt_profile = CommonButton(self,"Profile")
-        bt_profile.setIcon(QIcon('icons/profile.png'))
-        bt_profile.setStyleSheet('border:None')
-        setting_profile = CommonButton(self,"Setting")
-        setting_profile.setIcon(QIcon('icons/setting.png'))
-
-        self.layout.addWidget(bt_profile,1,88,1,5)
-        self.layout.addWidget(setting_profile,1,94,1,5)
+        self.anchorDlg = QAnchorDialog(self)
         
-
-        self.setLayout(self.layout)
-        self.layout.setContentsMargins(0,0,0,0)
-        self.setMinimumSize(450,850)
-        self.setWindowFlags(Qt.FramelessWindowHint|Qt.WindowStaysOnTopHint)
-        self.pressing = False
-        
-
-        #init style sheet
-        
-        self.__initStyleSheet()
 
     def __initStyleSheet(self):
-        #strange stylesheet not working
-        self.styleSheet = """
-        MatchStepItem{
-            margin-bottom:5px;border:1px solid black;
-        }
-        MySizeGrip{
-            
-        }
-        QTextEdit{
-            border:1px solid black
-        }
-        """
-        self.setStyleSheet(self.styleSheet)
-        # self.setAttribute(Qt.WA_StyledBackground)
-        
-    def paintEvent(self,event):
-
-        painter = QPainter(self)
-        pen = QPen(Qt.black)
-        pen.setWidth(2)
-        painter.setPen(pen)
-        painter.drawRect(QRect(2,2,self.width()-5,self.height()-5))
-    def closeEvent(self,event):
-        if(keyboard._hotkeys is not {}):
-            keyboard.unhook_all_hotkeys()
-
+        pass
     
+
         
 
 if __name__ == "__main__":
