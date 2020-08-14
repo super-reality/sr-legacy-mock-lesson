@@ -28,12 +28,12 @@ def main():
             "jsonrpc": "2.0",
             "id": 5,
         },
-        # {
-        #     "method": "simple_add",
-        #     "params": {"first": 17, "second": 39},
-        #     "jsonrpc": "2.0",
-        #     "id": 0,
-        # },
+        {
+            "method": "simple_add",
+            "params": {"first": 17, "second": 39},
+            "jsonrpc": "2.0",
+            "id": 0,
+        },
         # {
         #     "method": "echo",
         #     "params": ["Hello!"],

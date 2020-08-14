@@ -24,6 +24,7 @@ from collections import namedtuple
 import threading
 import boto3
 from pygame import mixer 
+import random
 #################### Get project Tree from current Teacher Lessson folder ##########################
 
 def path_to_dict(pathDir,childList=[]):
@@ -129,7 +130,46 @@ def path_to_dict_s3( pathDir , childList=[] ):
     pass
 
 ########################################## End ###############################################
+def makeImageFolder():
+    if os.path.exists(os.path.join(os.getcwd(),"image")):
+        pass
+    else:
+        os.mkdir("image")
+    return "image"
+    
+def getFileNameTobeCreated():
+    path = os.path.join(os.getcwd(),makeImageFolder())
+    fileName = str(random.randint(1,10000)) + '.png'
+    filePath = os.path.join(path,fileName)
+    
+    while(os.path.exists(filePath)):
+        fileName = str(random.randint(1,10000)) + '.png'
+        filePath = os.path.join(path,fileName)
+    
+    return filePath
 
+def delFileByName(fileName):
+    path = makeImageFolder()
+    filePath = os.path.join(path,fileName)
+    if os.path.exists(filePath):
+        os.remove(path)
+
+    
+def saveWindowRect(posx,posy,width,height,name):
+    if(width <= 0 or height <= 0):
+        return None
+    if name == "":
+        #create new file
+        filename  = getFileNameTobeCreated()
+        imDisplay = getRectAsImage((posx,posy,posx+width,posy+height))
+        imDisplay.save(filename)
+        return filename
+    else:
+        filename = name
+        imDisplay = getRectAsImage((posx,posy,posx+width,posy+height))
+        imDisplay.save(filename)
+        return filename
+    pass
 def getPixmapFromScreen(posx,posy,W,H):
         """
         get screenshot with posx,posy,w,h and save it to local file 
