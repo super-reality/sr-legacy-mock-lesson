@@ -30,8 +30,12 @@ def application(request):
     return result
 
 if __name__ == "__main__":
-  logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s',level=logging.INFO)
-  run_simple('localhost', 4000, application)
+  # logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s',level=logging.INFO)
+  try:
+    run_simple('localhost', 4000, application)
+  except:
+    logging.error("error")
+    pass
   # print(snipImage(2110,110,500,200,"")
   
   
