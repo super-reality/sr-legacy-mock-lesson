@@ -11,5 +11,8 @@ test.py
 app.log
 setting.env
 game-gen.json
-image/*
-image1/*
+__pycache__/Setting.cpython-38.pyc
+server.spec
+__pycache__/MyUtil.cpython-37.pyc
+__pycache__/server.cpython-37.pyc
+__pycache__/Setting.cpython-37.pyc
