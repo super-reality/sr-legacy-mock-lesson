@@ -11,3 +11,5 @@ test.py
 app.log
 setting.env
 game-gen.json
+image/*
+image1/*
