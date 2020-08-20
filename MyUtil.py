@@ -165,7 +165,11 @@ def saveWindowRect(posx,posy,width,height,name):
         imDisplay.save(filename)
         return filename
     else:
-        filename = name
+        try:
+            os.remove(name)
+        except:
+            pass
+        filename  = getFileNameTobeCreated()
         imDisplay = getRectAsImage((posx,posy,posx+width,posy+height))
         imDisplay.save(filename)
         return filename
