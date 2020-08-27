@@ -29,18 +29,12 @@ def UploadProject( ProjectName = '' ,LocalPath = '' ):
     session = boto3.Session(
         aws_access_key_id = Settings.getSetting()['aws_access_key_id'],
         aws_secret_access_key= Settings.getSetting()['aws_secret_access_key'],
-        region_name= Settings.region_name
+        region_name= None
     )
-    s3 = session.resource('s3')
-    bucket = s3.Bucket('openverse-lms')
- 
-    for subdir, dirs, files in os.walk(path):
-        
-        for file in files:
-            full_path = os.path.join(subdir, file)
-            with open(full_path, 'rb') as data:
-                basePath = Globals.projectmgr.getTeacherProjectsLocalPath()
-                bucket.put_object(Key=full_path[len(basePath)+1:], Body=data)
+    s3 = session.client('s3')
+    # bucket = s3.Bucket('openverse-lms')
+    with open(LocalPath,'rb') as f:
+        pass
 
 def download_dir(client, resource, dist, local='/tmp', bucket='your_bucket'):
     paginator = client.get_paginator('list_objects')
