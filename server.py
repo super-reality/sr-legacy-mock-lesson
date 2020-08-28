@@ -5,7 +5,6 @@ from werkzeug.serving import run_simple
 import logging
 from datetime import datetime
 from MyUtil import *
-import boto3
 
 manager = JSONRPCResponseManager()
 mw = None
@@ -24,32 +23,9 @@ def snipImage(posx, posy, width, height, path):
     path = path.replace('\\', '/')
     return {"imgPath": path}
 
-#################  AWS  ######################
-import boto3
-from botocore.exceptions import NoCredentialsError
-
-ACCESS_KEY = 'AKIAR5KZMOTEB45JUE45'
-SECRET_KEY = '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'
-
-
-def upload_to_aws(local_file, s3_file):
-    s3 = boto3.client('s3', aws_access_key_id=ACCESS_KEY,
-                      aws_secret_access_key=SECRET_KEY)
-    bucket = 'openverse-lms'
-    try:
-        s3.upload_file(local_file, bucket, s3_file)
-        print("Upload Successful")
-        return True
-    except FileNotFoundError:
-        print("The file was not found")
-        return False
-    except NoCredentialsError:
-        print("Credentials not available")
-        return False
 
 
 dispatcher.add_method(snipImage)
-dispatcher.add_method(upload_to_aws)
 
 
 @Request.application
