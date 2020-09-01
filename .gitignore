@@ -10,3 +10,4 @@ stack.py
 test.py
 app.log
 game-gen.json
+image/*
