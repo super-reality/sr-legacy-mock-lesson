@@ -11,7 +11,6 @@ test.json
 stack.py
 test.py
 app.log
-setting.env
 game-gen.json
 DownLoad/*
 __pycache__/Setting.cpython-38.pyc
