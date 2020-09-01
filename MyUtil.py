@@ -95,6 +95,7 @@ def convertPathToObj(paths):
     # convertPathToObj(res[key],leafs)
    
 ########################################## End ###############################################
+import pandas as pd
 def makeImageFolder():
     if os.path.exists(os.path.join(os.getcwd(),"image")):
         pass
@@ -106,6 +107,12 @@ def makeDownloadFolder():
         pass
     else:
         os.mkdir("DownLoad")
+    if( os.path.exists(os.path.join(os.getcwd(),'files.csv'))):
+        pass
+    else:
+        #create csv file
+        files = pd.DataFrame([[0,1]],columns=['localpath','remotepath'])
+        files.to_csv('files.csv')
     return "DownLoad"
     
 def getFileNameTobeCreated():
@@ -118,7 +125,34 @@ def getFileNameTobeCreated():
         filePath = os.path.join(path,fileName)
     
     return filePath
-def getDownloadFileNameTobeCreated():
+def checkFileExistsFromUrl(imageUrl):
+
+    files = pd.read_csv("files.csv")
+    result = files[files['remotepath'] == imageUrl]
+    
+    if(result.empty):
+        return ""
+    else:
+        for path in result['localpath'].values:
+            if os.path.exists(path):
+                return path
+            else:
+                pass
+        return ""
+
+def updateFilesCSV(imageUrl,filepath):
+    files = pd.read_csv("files.csv")
+    row = pd.DataFrame([[filepath,imageUrl]],columns=['localpath','remotepath'])
+    files = files.append(row)
+    files.to_csv("files.csv",index=None)
+    pass
+def getDownloadFileNameTobeCreated(imageUrl):
+    #check if imageUrl exists in current folder
+    filepath = checkFileExistsFromUrl(imageUrl)
+    if(filepath == ""):
+        pass
+    else:
+        return filepath
     path = os.path.join(os.getcwd(),makeDownloadFolder())
     fileName = str(random.randint(1,100000)) + '.png'
     filePath = os.path.join(path,fileName)
@@ -127,6 +161,11 @@ def getDownloadFileNameTobeCreated():
         fileName = str(random.randint(1,100000)) + '.png'
         filePath = os.path.join(path,fileName)
     
+
+    f = open(filePath,'wb')
+    f.write(requests.get(imageUrl).content)
+    f.close()
+    updateFilesCSV(imageUrl,filePath)
     return filePath
 
 def delFileByName(fileName):
@@ -155,17 +194,20 @@ def saveWindowRect(posx,posy,width,height,name):
         imDisplay.save(filename)
         return filename
     pass
+
 import requests
 
-def findCVMatch(imageUrl):
+def findCVMatch(imageUrl,parentx,parenty,parentwidth,parentheight):
     #make download dir if not exist.
     makeDownloadFolder()
-    fileName = getDownloadFileNameTobeCreated()
-    f = open(fileName,'wb')
-    f.write(requests.get(imageUrl).content)
-    f.close()
+    fileName = getDownloadFileNameTobeCreated(imageUrl)
+    print(fileName,"fileName")
+    try:
+        (found,X,Y,W,H,R) = match_image(fileName,parentx,parenty,parentwidth,parentheight)
+    except:
+        (found,X,Y,W,H,R) = (0,0,0,0,0,0)
 
-    pass
+    return (found,X,Y,W,H,R)
 # def getPixmapFromScreen(posx,posy,W,H):
 #         """
 #         get screenshot with posx,posy,w,h and save it to local file 
@@ -228,28 +270,28 @@ def findCVMatch(imageUrl):
 #     return False
 
 # # Resizes a image and maintains aspect ratio
-# def maintain_aspect_ratio_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
-#     # Grab the image size and initialize dimensions
-#     dim = None
-#     (h, w) = image.shape[:2]
+def maintain_aspect_ratio_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
+    # Grab the image size and initialize dimensions
+    dim = None
+    (h, w) = image.shape[:2]
 
-#     # Return original image if no need to resize
-#     if width is None and height is None:
-#         return image
+    # Return original image if no need to resize
+    if width is None and height is None:
+        return image
 
-#     # We are resizing height if width is none
-#     if width is None:
-#         # Calculate the ratio of the height and construct the dimensions
-#         r = height / float(h)
-#         dim = (int(w * r), height)
-#     # We are resizing width if height is none
-#     else:
-#         # Calculate the ratio of the 0idth and construct the dimensions
-#         r = width / float(w)
-#         dim = (width, int(h * r))
+    # We are resizing height if width is none
+    if width is None:
+        # Calculate the ratio of the height and construct the dimensions
+        r = height / float(h)
+        dim = (int(w * r), height)
+    # We are resizing width if height is none
+    else:
+        # Calculate the ratio of the 0idth and construct the dimensions
+        r = width / float(w)
+        dim = (width, int(h * r))
 
-#     # Return the resized image
-#     return cv2.resize(image, dim, interpolation=inter)
+    # Return the resized image
+    return cv2.resize(image, dim, interpolation=inter)
 
 # #this function matches the template by resizing template from 0.7x to 1.3x of the original size to cater different screen sizes..
 def match_image(url,parentx,parenty,parentwidth,parentheight):
@@ -279,7 +321,6 @@ def match_image(url,parentx,parenty,parentwidth,parentheight):
 
         match = cv2.matchTemplate(gray_image, resized, cv2.TM_CCOEFF_NORMED)
         threshold = Settings.getSetting()['tolerance']
-        logging.info("threshold value is: %s, and scale value is : %s",threshold, scale)
         position = np.where(match >= threshold)  # get the location of template in the image
 
         for point in zip(*position[::-1]):  # draw the rectangle around the matched template
@@ -301,14 +342,14 @@ def match_image(url,parentx,parenty,parentwidth,parentheight):
 
     #if returns ( template_found? , (X,Y,W,H of the area found), R resized template ratio...
 
-# def convertImageToGray(image):
-#     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-#     image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-#     return image
+def convertImageToGray(image):
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+    return image
 
-# def loadImageFromUrl(url):
-#     img = cv2.imread(url,0)
-#     return img
+def loadImageFromUrl(url):
+    img = cv2.imread(url,0)
+    return img
 
 # def addTwoCVImage(background,overlay):
 #     foreground = overlay
@@ -341,22 +382,22 @@ def match_image(url,parentx,parenty,parentwidth,parentheight):
 #     else:
 #         pass
 
-# def getWholeScreen(isgray=True):
+def getWholeScreen(isgray=True):
     
-#     if(isgray):
-#         entireScreen = getScreenAsImage()
-#         image = np.array(entireScreen)
-#         image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
-#         return image
-#     else:
-#         entireScreen = getScreenAsImage()
-#         image = np.array(entireScreen)
-#         return convertImageToGray(image)
+    if(isgray):
+        entireScreen = getScreenAsImage()
+        image = np.array(entireScreen)
+        image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+        return image
+    else:
+        entireScreen = getScreenAsImage()
+        image = np.array(entireScreen)
+        return convertImageToGray(image)
 
-# def getScreenSize():
-#     entireScreen = getScreenAsImage()
-#     image = np.array(entireScreen)
-#     return image.shape[0],image.shape[1]
+def getScreenSize():
+    entireScreen = getScreenAsImage()
+    image = np.array(entireScreen)
+    return image.shape[0],image.shape[1]
 
 # def openFileDlg(parent = None):
     

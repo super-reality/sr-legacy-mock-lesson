@@ -23,15 +23,12 @@ def snipImage(posx, posy, width, height, path):
     path = path.replace('\\', '/')
     return {"imgPath": path}
 
-def findCV(imageUrl):
-    posx = 0
-    posy = 0
-    width = 0
-    height = 0
-    
+def findCV(imageUrl,parentx,parenty,parentwidth,parentheight):
+    result = findCVMatch(imageUrl,parentx,parenty,parentwidth,parentheight)
+    return list(result)
 
-    return posx,posy,width,height
 dispatcher.add_method(snipImage)
+dispatcher.add_method(findCV)
 
 
 @Request.application
@@ -45,10 +42,9 @@ def application(request):
 
 
 if __name__ == "__main__":
-    # logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s',level=logging.INFO)
-    try:
-        run_simple('localhost', 4000, application)
-    except:
-        logging.error("error")
-        pass
-    # print(snipImage(2110,110,500,200,"")
+    print(findCV("https://openverse-lms.s3-us-west-1.amazonaws.com/3.PNG",0,0,10,10))
+    # try:
+    #     run_simple('localhost', 4000, application)
+    # except:
+    #     logging.error("error")
+    #     pass
