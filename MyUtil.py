@@ -94,41 +94,6 @@ def convertPathToObj(paths):
 
     # convertPathToObj(res[key],leafs)
    
-# def getDataFromBucket(bucketName=""):
-#     # return []
-#     bucketName = Settings.bucketName
-#     session = boto3.Session(
-#         aws_access_key_id = Settings.getSetting()['aws_access_key_id'],
-#         aws_secret_access_key= Settings.getSetting()['aws_secret_access_key'],
-#         region_name= Settings.region_name
-#     )
-#     s3 = session.resource('s3')
-#     bucket = s3.Bucket(bucketName)
-#     result = []
-#     for object in bucket.objects.filter(Prefix = ""):
-#         result.append(object.key)
-#     convertPathToObj(result)
-#     return result
-
-# def deleteByThread(path):
-#     th_delete = threading.Thread(target=deleteBucket,args=(path,),daemon=True)
-#     th_delete.start()
-#     pass
-# def deleteBucket(path):
-#     bucketName = Settings.bucketName
-#     session = boto3.Session(
-#         aws_access_key_id = Settings.getSetting()['aws_access_key_id'],
-#         aws_secret_access_key= Settings.getSetting()['aws_secret_access_key'],
-#         region_name= Settings.region_name
-#     )
-#     s3 = session.resource('s3')
-#     bucket = s3.Bucket(bucketName)
-#     bucket.objects.filter(Prefix=path).delete()
-
-# def path_to_dict_s3( pathDir , childList=[] ):
-    
-#     pass
-
 ########################################## End ###############################################
 def makeImageFolder():
     if os.path.exists(os.path.join(os.getcwd(),"image")):
@@ -136,6 +101,12 @@ def makeImageFolder():
     else:
         os.mkdir("image")
     return "image"
+def makeDownloadFolder():
+    if os.path.exists(os.path.join(os.getcwd(),"DownLoad")):
+        pass
+    else:
+        os.mkdir("DownLoad")
+    return "DownLoad"
     
 def getFileNameTobeCreated():
     path = os.path.join(os.getcwd(),makeImageFolder())
@@ -144,6 +115,16 @@ def getFileNameTobeCreated():
     
     while(os.path.exists(filePath)):
         fileName = str(random.randint(1,10000)) + '.png'
+        filePath = os.path.join(path,fileName)
+    
+    return filePath
+def getDownloadFileNameTobeCreated():
+    path = os.path.join(os.getcwd(),makeDownloadFolder())
+    fileName = str(random.randint(1,100000)) + '.png'
+    filePath = os.path.join(path,fileName)
+    
+    while(os.path.exists(filePath)):
+        fileName = str(random.randint(1,100000)) + '.png'
         filePath = os.path.join(path,fileName)
     
     return filePath
@@ -173,6 +154,17 @@ def saveWindowRect(posx,posy,width,height,name):
         imDisplay = getRectAsImage((posx,posy,posx+width,posy+height))
         imDisplay.save(filename)
         return filename
+    pass
+import requests
+
+def findCVMatch(imageUrl):
+    #make download dir if not exist.
+    makeDownloadFolder()
+    fileName = getDownloadFileNameTobeCreated()
+    f = open(fileName,'wb')
+    f.write(requests.get(imageUrl).content)
+    f.close()
+
     pass
 # def getPixmapFromScreen(posx,posy,W,H):
 #         """
@@ -260,54 +252,54 @@ def saveWindowRect(posx,posy,width,height,name):
 #     return cv2.resize(image, dim, interpolation=inter)
 
 # #this function matches the template by resizing template from 0.7x to 1.3x of the original size to cater different screen sizes..
-# def match_image(url,parentx,parenty,parentwidth,parentheight):
-#     gray_image = getWholeScreen()
-#     template = loadImageFromUrl(url)
-#     (tH, tW) = template.shape[::-1]  # get the width and height
-#     # match the template using cv2.matchTemplate
-#     match = cv2.matchTemplate(gray_image, template, cv2.TM_CCOEFF_NORMED)
-#     threshold = Settings.getSetting()['tolerance']
+def match_image(url,parentx,parenty,parentwidth,parentheight):
+    gray_image = getWholeScreen()
+    template = loadImageFromUrl(url)
+    (tH, tW) = template.shape[::-1]  # get the width and height
+    # match the template using cv2.matchTemplate
+    match = cv2.matchTemplate(gray_image, template, cv2.TM_CCOEFF_NORMED)
+    threshold = Settings.getSetting()['tolerance']
     
-#     position = np.where(match >= threshold)  # get the location of template in the image
+    position = np.where(match >= threshold)  # get the location of template in the image
     
-#     found = 0
-#     X = 0
-#     Y = 0
-#     W = 0
-#     H = 0
-#     R = 1
+    found = 0
+    X = 0
+    Y = 0
+    W = 0
+    H = 0
+    R = 1
 
-#     scales = np.linspace(0.5, 1.9, 25)[::-1]
-#     scales = np.insert(scales, 0, 1.0, axis=0)
+    scales = np.linspace(0.5, 1.9, 25)[::-1]
+    scales = np.insert(scales, 0, 1.0, axis=0)
 
-#     for scale in scales:
-#         # Resize image to scale and keep track of ratio
-#         resized = maintain_aspect_ratio_resize(template, width=int(template.shape[1] * scale))
-#         r = template.shape[1] / float(resized.shape[1])
+    for scale in scales:
+        # Resize image to scale and keep track of ratio
+        resized = maintain_aspect_ratio_resize(template, width=int(template.shape[1] * scale))
+        r = template.shape[1] / float(resized.shape[1])
 
-#         match = cv2.matchTemplate(gray_image, resized, cv2.TM_CCOEFF_NORMED)
-#         threshold = Settings.getSetting()['tolerance']
-#         logging.info("threshold value is: %s, and scale value is : %s",threshold, scale)
-#         position = np.where(match >= threshold)  # get the location of template in the image
+        match = cv2.matchTemplate(gray_image, resized, cv2.TM_CCOEFF_NORMED)
+        threshold = Settings.getSetting()['tolerance']
+        logging.info("threshold value is: %s, and scale value is : %s",threshold, scale)
+        position = np.where(match >= threshold)  # get the location of template in the image
 
-#         for point in zip(*position[::-1]):  # draw the rectangle around the matched template
-#             found = 1
-#             (X,Y,W,H,R) = (int(point[0]),int(point[1]),int( tW / r),int(tH / r) , r)
+        for point in zip(*position[::-1]):  # draw the rectangle around the matched template
+            found = 1
+            (X,Y,W,H,R) = (int(point[0]),int(point[1]),int( tW / r),int(tH / r) , r)
             
-#             if X < parentx or X + W > parentx +parentwidth or Y < parenty or Y + H > parenty + parentheight:
-#                 break
-#             else:
-#                 (X,Y,W,H,R) = (0,0,0,0,0)
-#                 found = 0
-#                 continue
-#             break
+            if X < parentx or X + W > parentx +parentwidth or Y < parenty or Y + H > parenty + parentheight:
+                break
+            else:
+                (X,Y,W,H,R) = (0,0,0,0,0)
+                found = 0
+                continue
+            break
 
-#         if (found):
-#             break
+        if (found):
+            break
 
-#     return (found,X,Y,W,H,R)
+    return (found,X,Y,W,H,R)
 
-#     #if returns ( template_found? , (X,Y,W,H of the area found), R resized template ratio...
+    #if returns ( template_found? , (X,Y,W,H of the area found), R resized template ratio...
 
 # def convertImageToGray(image):
 #     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

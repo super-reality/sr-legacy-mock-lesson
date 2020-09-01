@@ -23,8 +23,14 @@ def snipImage(posx, posy, width, height, path):
     path = path.replace('\\', '/')
     return {"imgPath": path}
 
+def findCV(imageUrl):
+    posx = 0
+    posy = 0
+    width = 0
+    height = 0
+    
 
-
+    return posx,posy,width,height
 dispatcher.add_method(snipImage)
 
 
