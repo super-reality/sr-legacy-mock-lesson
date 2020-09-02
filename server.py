@@ -46,7 +46,6 @@ def findCVArray(imageUrls,functions,parentx,parenty,parentwidth,parentheight):
     
     maxMatchScore = 0
     maxMatch = None
-    imageUrl = None
 
     for imageOr in imagesOr:
         result = findCV(imageOr,parentx,parenty,parentwidth,parentheight)
@@ -54,7 +53,6 @@ def findCVArray(imageUrls,functions,parentx,parenty,parentwidth,parentheight):
         if(maxMatchScore < result[5]):
             maxMatchScore = result[5]
             maxMatch = result
-            imageUrl = imageOr
 
     return maxMatch
 
