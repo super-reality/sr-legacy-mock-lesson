@@ -207,7 +207,7 @@ def findCVMatch(imageUrl,parentx,parenty,parentwidth,parentheight):
     except:
         (found,X,Y,W,H,R) = (0,0,0,0,0,0)
 
-    return (found,X,Y,W,H,R)
+    return (found,X,Y,H,W,R)
 # def getPixmapFromScreen(posx,posy,W,H):
 #         """
 #         get screenshot with posx,posy,w,h and save it to local file 
@@ -309,11 +309,10 @@ def match_image(url,parentx,parenty,parentwidth,parentheight):
     Y = 0
     W = 0
     H = 0
-    R = 1
+    R = 0
 
     scales = np.linspace(0.5, 1.9, 25)[::-1]
     scales = np.insert(scales, 0, 1.0, axis=0)
-
     for scale in scales:
         # Resize image to scale and keep track of ratio
         resized = maintain_aspect_ratio_resize(template, width=int(template.shape[1] * scale))
