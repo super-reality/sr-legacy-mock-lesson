@@ -26,6 +26,12 @@ def findCV(imageUrl,parentx,parenty,parentwidth,parentheight):
     result = findCVMatch(imageUrl,parentx,parenty,parentwidth,parentheight)
     return list(result)
 
+def TTS(text=""):
+    try:
+        playAudioFromText(text)
+    except:
+        pass
+
 def findCVArray(imageUrls,functions,parentx,parenty,parentwidth,parentheight):
     imagesOr = []
     imagesAnd = []
@@ -48,7 +54,6 @@ def findCVArray(imageUrls,functions,parentx,parenty,parentwidth,parentheight):
 
     for imageOr in imagesOr:
         result = findCV(imageOr,parentx,parenty,parentwidth,parentheight)
-        print(result[5])
         if(maxMatchScore < result[5]):
             maxMatchScore = result[5]
             maxMatch = result
@@ -58,6 +63,7 @@ def findCVArray(imageUrls,functions,parentx,parenty,parentwidth,parentheight):
 dispatcher.add_method(snipImage)
 dispatcher.add_method(findCV)
 dispatcher.add_method(findCVArray)
+dispatcher.add_method(TTS)
 
 
 @Request.application
@@ -71,9 +77,6 @@ def application(request):
 
 
 if __name__ == "__main__":
-    # imageUrls = ["https://openverse-lms.s3-us-west-1.amazonaws.com/3.PNG","https://openverse-lms.s3-us-west-1.amazonaws.com/2.PNG","https://openverse-lms.s3-us-west-1.amazonaws.com/1.PNG"]
-    # functions = [2,2,2]
-    # print(findCVArray(imageUrls,functions,0,0,10,10))
     try:
         run_simple('localhost', 4000, application)
     except:

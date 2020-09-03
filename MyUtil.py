@@ -7,7 +7,6 @@ getDisplayRects, saveScreenToBmp, saveRectToBmp, getScreenAsImage,
 getRectAsImage, getDisplaysAsImages)
 
 from PIL.ImageQt import ImageQt
-from Setting import Settings
 import logging
 from PIL import Image
 import os
@@ -35,14 +34,6 @@ def path_to_dict(pathDir,childList=[]):
         else:
             pass
     
-def isLeaf(path=None):
-    if(path is None):
-        return False
-    path = os.path.join(path,Settings.projectFileName)
-    if(os.path.exists(path)):
-        return True
-    else:
-        return False
 
 def getDataFromCurrentTeacherFolder():
     
@@ -229,13 +220,13 @@ def maintain_aspect_ratio_resize(image, width=None, height=None, inter=cv2.INTER
     return cv2.resize(image, dim, interpolation=inter)
 
 # #this function matches the template by resizing template from 0.7x to 1.3x of the original size to cater different screen sizes..
-def match_image(url,parentx,parenty,parentwidth,parentheight):
+def match_image(url,parentx,parenty,parentwidth,parentheight,tolerance=0.9):
     gray_image = getWholeScreen()
     template = loadImageFromUrl(url)
     (tH, tW) = template.shape[::-1]  # get the width and height
     # match the template using cv2.matchTemplate
     match = cv2.matchTemplate(gray_image, template, cv2.TM_CCOEFF_NORMED)
-    threshold = Settings.getSetting()['tolerance']
+    threshold = tolerance
     
     position = np.where(match >= threshold)  # get the location of template in the image
     
@@ -254,7 +245,7 @@ def match_image(url,parentx,parenty,parentwidth,parentheight):
         r = template.shape[1] / float(resized.shape[1])
 
         match = cv2.matchTemplate(gray_image, resized, cv2.TM_CCOEFF_NORMED)
-        threshold = Settings.getSetting()['tolerance']
+        threshold = tolerance
         position = np.where(match >= threshold)  # get the location of template in the image
 
         for point in zip(*position[::-1]):  # draw the rectangle around the matched template
@@ -302,46 +293,29 @@ def getScreenSize():
     image = np.array(entireScreen)
     return image.shape[0],image.shape[1]
 
+############################### TTS ###################################
 
+import requests
+import os
+import playsound
+import io
+from pygame import mixer 
 
-# ###################TTS#########################
-# from google.cloud import texttospeech as tts
-# import os
-# import playsound
-# os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="game-gen.json"
-# from google.cloud import texttospeech
-# import io
-# def playAudioFromText(Text="",):
-    
-#     # Instantiates a client
-#     client = texttospeech.TextToSpeechClient()
-    
-#     # Set the text input to be synthesized
-    
-#     if '<speak>' in Text:
-#         synthesis_input = texttospeech.SynthesisInput(ssml=Text)
-#     else:
-#         synthesis_input = texttospeech.SynthesisInput(text=Text)
+def playAudioFromText(Text=""):
+    response = requests.post('http://13.57.48.8:5000/text_to_speech', json={
+        "lesson": Text
+    })
 
-#     # Build the voice request, select the language code ("en-US") and the ssml
-#     # voice gender ("neutral")
-#     voice = texttospeech.VoiceSelectionParams(
-#         language_code=Settings.getSetting()['language-tts'],
-#         ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL,name=Settings.getSetting()['name-tts'])
-
-#     # Select the type of audio file you want returned
-#     audio_config = texttospeech.AudioConfig(
-#         audio_encoding=texttospeech.AudioEncoding.MP3,speaking_rate=Settings.getSetting()['speaking_rate-tts'])
-
-#     # Perform the text-to-speech request on the text input with the selected
-#     # voice parameters and audio file type
-#     response = client.synthesize_speech(input=synthesis_input,voice=voice,audio_config=audio_config)
-#     # The response's audio_content is binary.
-#     mem_file = io.BytesIO(response.audio_content)
-#     mem_file.seek(0)
-#     mixer.init()
-#     mixer.music.load(mem_file)
-#     mixer.music.play(0)
-#     while mixer.music.get_busy():
-#         pass
-#     mem_file.close()
+    if response.status_code != 200:
+        # This means something went wrong.
+        print("wrong request")
+    else:
+      # The response's audio_content is binary.
+      mem_file = io.BytesIO(response._content)
+      mem_file.seek(0)
+      mixer.init()
+      mixer.music.load(mem_file)
+      mixer.music.play(0)
+      while mixer.music.get_busy():
+          pass
+      mem_file.close()
