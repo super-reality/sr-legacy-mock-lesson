@@ -16,6 +16,7 @@ from collections import namedtuple
 import threading
 import random
 import pandas as pd
+
 #################### Get project Tree from current Teacher Lessson folder ##########################
 
 def path_to_dict(pathDir,childList=[]):
@@ -302,6 +303,8 @@ import io
 from pygame import mixer 
 
 def playAudioFromText(Text=""):
+    if(Text[-1] != '.'):
+        Text = Text + '.'
     response = requests.post('http://13.57.48.8:5000/text_to_speech', json={
         "lesson": Text
     })

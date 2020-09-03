@@ -4,4 +4,4 @@ Desktopmagic
 opencv-python
 keyboard
 Pillow
-pip install https://download.lfd.uci.edu/pythonlibs/w3jqiv8s/pycairo-1.19.1-cp37-cp37m-win_amd64.whl
+json-rpc-3==1.8.4

@@ -31,6 +31,7 @@ def TTS(text=""):
         playAudioFromText(text)
     except:
         pass
+    return None
 
 def findCVArray(imageUrls,functions,parentx,parenty,parentwidth,parentheight):
     imagesOr = []
