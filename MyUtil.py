@@ -285,37 +285,6 @@ def loadImageFromUrl(url):
     img = cv2.imread(url,0)
     return img
 
-# def addTwoCVImage(background,overlay):
-#     foreground = overlay
-#     gray_overaly = cv2.cvtColor(overlay.copy(),cv2.COLOR_BGR2GRAY)
-#     alpha_background = background[:,:,3] / 255.0
-#     alpha_background[:,:] = 0.99
-#     max_val = np.max(gray_overaly)
-#     alpha_foreground = (gray_overaly[:,:] / 255.0)*(gray_overaly[:,:] / 255.0)*(gray_overaly[:,:] / 255.0)*255*255*255/max_val/max_val/max_val
-    
-#     # set adjusted colors
-#     for color in range(0, 3):
-#         background[:,:,color] = alpha_foreground * foreground[:,:,color] + \
-#             alpha_background * background[:,:,color] * (1 - alpha_foreground)
-#     background[:,:,3] = (1 - (1 - alpha_foreground) * (1 - alpha_background)) * 255
-#     return background
-
-# def convertPixmapToGray(pixmap=None,isgray=True):
-#     if(pixmap is not None):
-#         image = pixmap.toImage()
-#         _width = image.width()
-#         _height = image.height()
-#         channels_count = 4
-#         s = image.bits().asstring(_width * _height * channels_count)
-#         gray = np.fromstring(s, dtype=np.uint8).reshape((_height, _width, channels_count)) 
-#         if(isgray == True):
-#             gray = convertImageToGray(gray)
-#         # cv2.imshow("ttest",test)
-#         # cv2.waitKey(0)
-#         return gray
-#     else:
-#         pass
-
 def getWholeScreen(isgray=True):
     
     if(isgray):
