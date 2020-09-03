@@ -9,7 +9,6 @@ from MyUtil import *
 manager = JSONRPCResponseManager()
 mw = None
 
-
 def showAnchorDlg():
     return {"State": True}
 

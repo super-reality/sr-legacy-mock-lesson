@@ -2,10 +2,6 @@ pyqt5
 PyQtWebEngine
 Desktopmagic
 opencv-python
-pytesseract
-boto3
-boto
-botocore
 keyboard
 Pillow
 pip install https://download.lfd.uci.edu/pythonlibs/w3jqiv8s/pycairo-1.19.1-cp37-cp37m-win_amd64.whl
