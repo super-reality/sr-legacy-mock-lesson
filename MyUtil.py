@@ -15,72 +15,9 @@ from collections import namedtuple
 
 import threading
 import random
-import pandas as pd
-
-#################### Get project Tree from current Teacher Lessson folder ##########################
-
-def path_to_dict(pathDir,childList=[]):
-    
-    for path in os.listdir(pathDir):
-        absPath = os.path.join(pathDir,path)
-        if os.path.isdir(absPath):
-            if isLeaf(absPath):
-                childList.append(os.path.basename(path))
-            else:
-                obj = {}
-                obj[os.path.basename(path)] = []
-                childList.append(obj)
-                path_to_dict(absPath,obj[os.path.basename(path)])
-            pass
-        else:
-            pass
-    
-
-def getDataFromCurrentTeacherFolder():
-    
-    result = []
-    path_to_dict( os.path.join(os.getcwd(),"ProjectsForTeacher") , result )
-    return result
-
-def convertPathToObj(paths):
-    res = {}
-    leafs = []
-    isHaveObj = False
-    for path in paths:
-        items = str(path).split('\\')
-        if len(items) == 2:
-            leafs.append(items[0])
-        elif len(items) > 2:
-            len_t = len(items[0])
-            res.setdefault(items[0],[]).append(path[len_t+1:])
-            isHaveObj = True
-            pass
-        else:
-            pass
-    leafs = list(set(leafs))
-    if(isHaveObj == False):
-        paths.clear()
-        paths.extend(leafs)
-        return
-    for key, value in res.items():
-        leafs.append({key:value})
-    
-    paths.clear()
-    paths.extend(leafs)
-    
-    for item in paths:
-        if type(item).__name__ == 'dict':
-            key = list(item.keys())[0]
-            convertPathToObj(item[key])
-            pass
-        pass
-    
-
-    # convertPathToObj(res[key],leafs)
-   
-########################################## End ###############################################
-
+import pandas as pd    
 ########################## JSON RPC SERVER CODE ###############################
+
 
 def makeImageFolder():
     if os.path.exists(os.path.join(os.getcwd(),"image")):
@@ -263,7 +200,6 @@ def match_image(url,parentx,parenty,parentwidth,parentheight,tolerance=0.9):
 
         if (found):
             break
-
     return (found,X,Y,W,H,R)
 
     #if returns ( template_found? , (X,Y,W,H of the area found), R resized template ratio...
@@ -301,10 +237,40 @@ import os
 import playsound
 import io
 from pygame import mixer 
+import hashlib
 
+def getDigestString(Text=""):
+    result = hashlib.md5(Text.encode())
+    return result.hexdigest()
+
+    
+def findOrMakeAudioFileFromText(Text=""):
+    audio_dir = "Audio"
+    if(os.path.exists(audio_dir)):
+        pass
+    else:
+        os.mkdir(audio_dir)
+    x = getDigestString(Text)
+    if(os.path.exists(os.path.join(audio_dir,x+'.wav'))):
+        return os.path.join(audio_dir,x+'.wav'),True
+    else:
+        return os.path.join(audio_dir,x+'.wav'),False
+    pass
 def playAudioFromText(Text=""):
+    if(Text == ""):
+        return
+    # do not delete this line(307). tihs is important and required.
+
     if(Text[-1] != '.'):
         Text = Text + '.'
+
+    filePath,b_exists = findOrMakeAudioFileFromText(Text)
+    
+    if(b_exists):
+        return filePath
+    else:
+        pass
+
     response = requests.post('http://13.57.48.8:5000/text_to_speech', json={
         "lesson": Text
     })
@@ -314,11 +280,9 @@ def playAudioFromText(Text=""):
         print("wrong request")
     else:
       # The response's audio_content is binary.
-      mem_file = io.BytesIO(response._content)
-      mem_file.seek(0)
-      mixer.init()
-      mixer.music.load(mem_file)
-      mixer.music.play(0)
-      while mixer.music.get_busy():
-          pass
-      mem_file.close()
+      with open(filePath,'+wb') as f:
+          f.write(response._content)
+          f.close()
+          return filePath
+    return None
+      

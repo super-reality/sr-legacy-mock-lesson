@@ -28,10 +28,12 @@ def findCV(imageUrl,parentx,parenty,parentwidth,parentheight):
 
 def TTS(text=""):
     try:
-        playAudioFromText(text)
+        filePath = playAudioFromText(text)
+        if(filePath is not None):
+            import playsound
+            playsound.playsound(filePath)
     except:
         pass
-    return None
 
 def findCVArray(imageUrls,functions,parentx,parenty,parentwidth,parentheight):
     imagesOr = []
