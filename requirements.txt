@@ -1,0 +1,14 @@
+Desktopmagic
+Pillow
+PyQtWebEngine
+json-rpc-3==1.8.4
+keyboard
+opencv-python
+pandas
+playsound
+pygame
+pyinstaller
+pyqt5
+pywin32
+requests
+werkzeug

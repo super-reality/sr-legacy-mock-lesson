@@ -1,7 +1,0 @@
-pyqt5
-PyQtWebEngine
-Desktopmagic
-opencv-python
-keyboard
-Pillow
-json-rpc-3==1.8.4
